@@ -1,5 +1,4 @@
 
-import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,31 +7,23 @@ import { Calendar, Clock, ChevronRight } from "lucide-react";
 import { getOrderSessions } from "@/services/orderService";
 import { OrderSession } from "@/types";
 import { format } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
 
 const MemberDashboard = () => {
-  const [orderSessions, setOrderSessions] = useState<OrderSession[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  useEffect(() => {
-    const fetchOrderSessions = async () => {
-      try {
-        const sessions = await getOrderSessions();
-        // Show active sessions first
-        const sortedSessions = [...sessions].sort((a, b) => {
-          if (a.isActive && !b.isActive) return -1;
-          if (!a.isActive && b.isActive) return 1;
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        });
-        setOrderSessions(sortedSessions);
-      } catch (error) {
-        console.error("Failed to fetch order sessions:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchOrderSessions();
-  }, []);
+  // Using React Query to fetch order sessions with auto-refresh
+  const { data: orderSessions, isLoading } = useQuery({
+    queryKey: ['orderSessions'],
+    queryFn: getOrderSessions,
+    refetchInterval: 10000, // Refetch every 10 seconds
+    select: (sessions) => {
+      // Show active sessions first
+      return [...sessions].sort((a, b) => {
+        if (a.isActive && !b.isActive) return -1;
+        if (!a.isActive && b.isActive) return 1;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+    }
+  });
 
   const formatDate = (dateString: string) => {
     try {
@@ -55,7 +46,7 @@ const MemberDashboard = () => {
         <div className="flex justify-center p-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-      ) : orderSessions.length === 0 ? (
+      ) : !orderSessions || orderSessions.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12 text-muted-foreground">
             <p>No order sessions available at the moment.</p>

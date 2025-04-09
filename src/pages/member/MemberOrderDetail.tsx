@@ -65,13 +65,15 @@ const MemberOrderDetail = () => {
     queryFn: () => sessionId ? getOrderSession(sessionId) : Promise.resolve(undefined),
     refetchInterval: 10000, // Refetch every 10 seconds
     enabled: !!sessionId && !!user,
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to fetch order session",
-        variant: "destructive"
-      });
-      navigate('/member');
+    meta: {
+      onError: () => {
+        toast({
+          title: "Error",
+          description: "Failed to fetch order session",
+          variant: "destructive"
+        });
+        navigate('/member');
+      }
     }
   });
   
@@ -86,14 +88,16 @@ const MemberOrderDetail = () => {
       return getUserOrder(sessionId, user.id);
     },
     enabled: !!sessionId && !!user,
-    onSuccess: (data) => {
-      if (data) {
-        // Initialize quantities state from user order
-        const initialQuantities: Record<string, number> = {};
-        data.items.forEach(item => {
-          initialQuantities[item.menuItemId] = item.quantity;
-        });
-        setQuantities(initialQuantities);
+    meta: {
+      onSuccess: (data: any) => {
+        if (data) {
+          // Initialize quantities state from user order
+          const initialQuantities: Record<string, number> = {};
+          data.items.forEach((item: OrderItem) => {
+            initialQuantities[item.menuItemId] = item.quantity;
+          });
+          setQuantities(initialQuantities);
+        }
       }
     }
   });

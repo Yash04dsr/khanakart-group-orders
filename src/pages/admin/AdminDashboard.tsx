@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
@@ -22,7 +21,8 @@ const AdminDashboard = () => {
   const { data: orderSessions, isLoading } = useQuery({
     queryKey: ['orderSessions'],
     queryFn: getOrderSessions,
-    refetchInterval: 10000, // Refetch every 10 seconds
+    refetchInterval: 5000, // Refetch every 5 seconds for quicker updates
+    staleTime: 1000, // Consider data stale after 1 second
   });
 
   const formatDate = (dateString: string) => {

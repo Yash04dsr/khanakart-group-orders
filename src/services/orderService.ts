@@ -1,4 +1,3 @@
-
 import { OrderItem, OrderSession, UserOrder } from '../types';
 import { MENU_ITEMS, MOCK_ORDER_SESSIONS } from './mockData';
 import { toast } from '../hooks/use-toast';
@@ -19,11 +18,21 @@ const saveToLocalStorage = () => {
 
 // Get all order sessions
 export const getOrderSessions = (): Promise<OrderSession[]> => {
+  // Refresh from localStorage in case other tabs/windows have updated it
+  const storedSessions = localStorage.getItem('orderSessions');
+  if (storedSessions) {
+    orderSessions = JSON.parse(storedSessions);
+  }
   return Promise.resolve([...orderSessions]);
 };
 
 // Get a specific order session
 export const getOrderSession = (sessionId: string): Promise<OrderSession | undefined> => {
+  // Refresh from localStorage in case other tabs/windows have updated it
+  const storedSessions = localStorage.getItem('orderSessions');
+  if (storedSessions) {
+    orderSessions = JSON.parse(storedSessions);
+  }
   const session = orderSessions.find(s => s.id === sessionId);
   return Promise.resolve(session ? { ...session } : undefined);
 };

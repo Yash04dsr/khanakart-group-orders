@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,13 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				khanakart: {
+					primary: "#E63946",
+					secondary: "#F1FAEE",
+					accent: "#A8DADC",
+					neutral: "#457B9D",
+					dark: "#1D3557",
 				}
 			},
 			borderRadius: {

@@ -1,5 +1,3 @@
-
-import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,74 +22,69 @@ import {
   getCompiledOrder, 
   toggleOrderSessionStatus 
 } from "@/services/orderService";
-import { OrderSession } from "@/types";
 import { ArrowLeft, UserCircle, ClipboardList, AlertTriangle, CheckCircle, Ban } from "lucide-react";
 import { format } from "date-fns";
 import { MENU_ITEMS } from "@/services/mockData";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const OrderSessionDetail = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
-  const [orderSession, setOrderSession] = useState<OrderSession | null>(null);
-  const [compiledOrder, setCompiledOrder] = useState<Array<{item: string; quantity: number; price: number}>>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isToggling, setIsToggling] = useState(false);
-  
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!sessionId) return;
-      
-      try {
-        const session = await getOrderSession(sessionId);
-        if (!session) {
-          navigate('/admin');
-          return;
-        }
-        
-        setOrderSession(session);
-        
-        const compiled = await getCompiledOrder(sessionId);
-        setCompiledOrder(compiled);
-      } catch (error) {
-        console.error("Failed to fetch order session details:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchData();
-  }, [sessionId, navigate]);
+  // Fetch order session details
+  const { 
+    data: orderSession, 
+    isLoading: isSessionLoading 
+  } = useQuery({
+    queryKey: ['orderSession', sessionId],
+    queryFn: () => sessionId ? getOrderSession(sessionId) : Promise.resolve(undefined),
+    refetchInterval: 10000, // Refetch every 10 seconds
+    enabled: !!sessionId,
+  });
 
-  const handleToggleStatus = async () => {
-    if (!orderSession || isToggling) return;
-    
-    setIsToggling(true);
-    
-    try {
-      const updated = await toggleOrderSessionStatus(orderSession.id);
-      if (updated) {
-        setOrderSession(updated);
-        
+  // Fetch compiled order
+  const { 
+    data: compiledOrder = [],
+    isLoading: isCompiledLoading
+  } = useQuery({
+    queryKey: ['compiledOrder', sessionId],
+    queryFn: () => sessionId ? getCompiledOrder(sessionId) : Promise.resolve([]),
+    refetchInterval: 10000, // Refetch every 10 seconds
+    enabled: !!sessionId,
+  });
+
+  // Toggle session status mutation
+  const { mutate: toggleStatus, isPending: isToggling } = useMutation({
+    mutationFn: () => {
+      if (!sessionId) throw new Error('Session ID is required');
+      return toggleOrderSessionStatus(sessionId);
+    },
+    onSuccess: (updatedSession) => {
+      if (updatedSession) {
         toast({
-          title: `Order ${updated.isActive ? 'Reopened' : 'Finalized'}`,
-          description: updated.isActive 
+          title: `Order ${updatedSession.isActive ? 'Reopened' : 'Finalized'}`,
+          description: updatedSession.isActive 
             ? "Team members can now place orders again" 
             : "The order has been finalized",
         });
+        
+        // Invalidate queries to refetch latest data
+        queryClient.invalidateQueries({ queryKey: ['orderSession', sessionId] });
+        queryClient.invalidateQueries({ queryKey: ['compiledOrder', sessionId] });
+        queryClient.invalidateQueries({ queryKey: ['orderSessions'] });
       }
-    } catch (error) {
+    },
+    onError: () => {
       toast({
         title: "Error",
         description: "Failed to update order status",
         variant: "destructive",
       });
-    } finally {
-      setIsToggling(false);
-    }
-  };
+    },
+  });
 
   const formatDate = (dateString: string) => {
     try {
@@ -115,6 +108,8 @@ const OrderSessionDetail = () => {
   const calculateGrandTotal = () => {
     return compiledOrder.reduce((sum, item) => sum + (item.quantity * item.price), 0);
   };
+
+  const isLoading = isSessionLoading || isCompiledLoading;
 
   if (isLoading) {
     return (
@@ -162,7 +157,7 @@ const OrderSessionDetail = () => {
         
         <Button 
           variant={orderSession.isActive ? "destructive" : "default"}
-          onClick={handleToggleStatus}
+          onClick={() => toggleStatus()}
           disabled={isToggling}
         >
           {isToggling ? (
@@ -266,7 +261,7 @@ const OrderSessionDetail = () => {
         
         <TabsContent value="individual">
           <div className="grid gap-6">
-            {orderSession.orders.length === 0 ? (
+            {!orderSession.orders || orderSession.orders.length === 0 ? (
               <Card>
                 <CardContent className="text-center py-8 flex flex-col items-center text-muted-foreground">
                   <AlertTriangle className="h-12 w-12 mb-4 text-khanakart-primary" />

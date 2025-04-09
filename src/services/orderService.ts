@@ -3,8 +3,19 @@ import { OrderItem, OrderSession, UserOrder } from '../types';
 import { MENU_ITEMS, MOCK_ORDER_SESSIONS } from './mockData';
 import { toast } from '../hooks/use-toast';
 
+// Initialize order sessions from localStorage if available, otherwise use mock data
+const getInitialOrderSessions = (): OrderSession[] => {
+  const storedSessions = localStorage.getItem('orderSessions');
+  return storedSessions ? JSON.parse(storedSessions) : [...MOCK_ORDER_SESSIONS];
+};
+
 // Mock database - in reality, this would be API calls to your backend
-let orderSessions: OrderSession[] = [...MOCK_ORDER_SESSIONS];
+let orderSessions: OrderSession[] = getInitialOrderSessions();
+
+// Helper function to save sessions to localStorage
+const saveToLocalStorage = () => {
+  localStorage.setItem('orderSessions', JSON.stringify(orderSessions));
+};
 
 // Get all order sessions
 export const getOrderSessions = (): Promise<OrderSession[]> => {
@@ -32,6 +43,7 @@ export const createOrderSession = (
   };
   
   orderSessions = [newSession, ...orderSessions];
+  saveToLocalStorage(); // Save to localStorage
   return Promise.resolve({ ...newSession });
 };
 
@@ -50,6 +62,7 @@ export const toggleOrderSessionStatus = (
     isActive: !orderSessions[sessionIndex].isActive
   };
   
+  saveToLocalStorage(); // Save to localStorage
   return Promise.resolve({ ...orderSessions[sessionIndex] });
 };
 
@@ -104,6 +117,7 @@ export const saveUserOrder = (
   }
   
   orderSessions[sessionIndex] = session;
+  saveToLocalStorage(); // Save to localStorage
   
   return Promise.resolve({ ...session });
 };

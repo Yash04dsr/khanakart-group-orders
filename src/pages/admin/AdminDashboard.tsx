@@ -1,5 +1,4 @@
 
-import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
@@ -14,28 +13,17 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlusCircle, Calendar, Clock } from "lucide-react";
-import { OrderSession } from "@/types";
 import { getOrderSessions } from "@/services/orderService";
 import { format } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
 
 const AdminDashboard = () => {
-  const [orderSessions, setOrderSessions] = useState<OrderSession[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  useEffect(() => {
-    const fetchOrderSessions = async () => {
-      try {
-        const sessions = await getOrderSessions();
-        setOrderSessions(sessions);
-      } catch (error) {
-        console.error("Failed to fetch order sessions:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchOrderSessions();
-  }, []);
+  // Using React Query to fetch order sessions with auto-refresh
+  const { data: orderSessions, isLoading } = useQuery({
+    queryKey: ['orderSessions'],
+    queryFn: getOrderSessions,
+    refetchInterval: 10000, // Refetch every 10 seconds
+  });
 
   const formatDate = (dateString: string) => {
     try {
@@ -66,7 +54,7 @@ const AdminDashboard = () => {
             <div className="flex justify-center p-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
-          ) : orderSessions.length === 0 ? (
+          ) : !orderSessions || orderSessions.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               No order sessions found. Create your first order session.
             </div>

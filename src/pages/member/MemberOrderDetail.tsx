@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,10 +18,11 @@ import {
   saveUserOrder
 } from "@/services/orderService";
 import { MENU_ITEMS } from "@/services/mockData";
-import { OrderItem, OrderSession } from "@/types";
+import { OrderItem } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Helper function to group menu items by category
 const groupItemsByCategory = () => {
@@ -49,58 +49,82 @@ const MemberOrderDetail = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
-  const [orderSession, setOrderSession] = useState<OrderSession | null>(null);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   
   // Group menu items by category
   const itemsByCategory = groupItemsByCategory();
   
-  useEffect(() => {
-    const fetchOrderData = async () => {
-      if (!sessionId || !user) {
-        navigate('/member');
-        return;
-      }
-      
-      try {
-        // Fetch order session
-        const session = await getOrderSession(sessionId);
-        if (!session) {
-          toast({
-            title: "Error",
-            description: "Order session not found",
-            variant: "destructive"
-          });
-          navigate('/member');
-          return;
-        }
-        
-        setOrderSession(session);
-        
-        // Fetch user's existing order
-        const userOrder = await getUserOrder(sessionId, user.id);
-        
-        // Initialize quantities state
+  // Fetch order session with React Query
+  const { 
+    data: orderSession,
+    isLoading: isSessionLoading
+  } = useQuery({
+    queryKey: ['orderSession', sessionId],
+    queryFn: () => sessionId ? getOrderSession(sessionId) : Promise.resolve(undefined),
+    refetchInterval: 10000, // Refetch every 10 seconds
+    enabled: !!sessionId && !!user,
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to fetch order session",
+        variant: "destructive"
+      });
+      navigate('/member');
+    }
+  });
+  
+  // Fetch user's existing order
+  const {
+    data: userOrder,
+    isLoading: isOrderLoading
+  } = useQuery({
+    queryKey: ['userOrder', sessionId, user?.id],
+    queryFn: () => {
+      if (!sessionId || !user) return Promise.resolve(undefined);
+      return getUserOrder(sessionId, user.id);
+    },
+    enabled: !!sessionId && !!user,
+    onSuccess: (data) => {
+      if (data) {
+        // Initialize quantities state from user order
         const initialQuantities: Record<string, number> = {};
-        if (userOrder) {
-          userOrder.items.forEach(item => {
-            initialQuantities[item.menuItemId] = item.quantity;
-          });
-        }
-        
+        data.items.forEach(item => {
+          initialQuantities[item.menuItemId] = item.quantity;
+        });
         setQuantities(initialQuantities);
-      } catch (error) {
-        console.error("Failed to fetch order data:", error);
-      } finally {
-        setIsLoading(false);
       }
-    };
-    
-    fetchOrderData();
-  }, [sessionId, user, navigate, toast]);
+    }
+  });
+  
+  // Save order mutation
+  const { mutate: saveOrder, isPending: isSaving } = useMutation({
+    mutationFn: (items: OrderItem[]) => {
+      if (!sessionId || !user || !orderSession || !orderSession.isActive) {
+        return Promise.reject("Cannot save order");
+      }
+      return saveUserOrder(sessionId, user.id, user.name, items);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Order saved",
+        description: "Your order has been saved successfully",
+      });
+      
+      // Invalidate queries to refetch latest data
+      queryClient.invalidateQueries({ queryKey: ['userOrder', sessionId, user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['orderSession', sessionId] });
+      queryClient.invalidateQueries({ queryKey: ['orderSessions'] });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to save order",
+        description: "An error occurred while saving your order",
+        variant: "destructive",
+      });
+    }
+  });
 
   const updateQuantity = (itemId: string, quantity: number) => {
     setQuantities(prev => ({
@@ -109,42 +133,21 @@ const MemberOrderDetail = () => {
     }));
   };
 
-  const handleSaveOrder = async () => {
-    if (!sessionId || !user || !orderSession || !orderSession.isActive) {
-      return;
-    }
-    
-    setIsSaving(true);
-    
-    try {
-      // Convert quantities to order items
-      const orderItems: OrderItem[] = Object.entries(quantities)
-        .filter(([_, quantity]) => quantity > 0)
-        .map(([itemId, quantity]) => {
-          const menuItem = MENU_ITEMS.find(item => item.id === itemId);
-          return {
-            menuItemId: itemId,
-            quantity,
-            price: menuItem?.price || 0
-          };
-        });
-      
-      // Save the order
-      await saveUserOrder(sessionId, user.id, user.name, orderItems);
-      
-      toast({
-        title: "Order saved",
-        description: "Your order has been saved successfully",
+  const handleSaveOrder = () => {
+    // Convert quantities to order items
+    const orderItems: OrderItem[] = Object.entries(quantities)
+      .filter(([_, quantity]) => quantity > 0)
+      .map(([itemId, quantity]) => {
+        const menuItem = MENU_ITEMS.find(item => item.id === itemId);
+        return {
+          menuItemId: itemId,
+          quantity,
+          price: menuItem?.price || 0
+        };
       });
-    } catch (error) {
-      toast({
-        title: "Failed to save order",
-        description: "An error occurred while saving your order",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSaving(false);
-    }
+    
+    // Save the order
+    saveOrder(orderItems);
   };
 
   // Calculate total order amount
@@ -166,6 +169,8 @@ const MemberOrderDetail = () => {
       return dateString;
     }
   };
+
+  const isLoading = isSessionLoading || isOrderLoading;
 
   if (isLoading) {
     return (

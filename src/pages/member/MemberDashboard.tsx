@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,11 +11,11 @@ import { useQuery } from "@tanstack/react-query";
 
 const MemberDashboard = () => {
   // Using React Query to fetch order sessions with auto-refresh
-  const { data: orderSessions, isLoading } = useQuery({
+  const { data: orderSessions, isLoading, refetch } = useQuery({
     queryKey: ['orderSessions'],
     queryFn: getOrderSessions,
-    refetchInterval: 5000, // Refetch every 5 seconds for quicker updates
-    staleTime: 1000, // Consider data stale after 1 second
+    refetchInterval: 2000, // Refetch every 2 seconds for near-real-time updates
+    staleTime: 0, // Consider data always stale to trigger refetch
     select: (sessions) => {
       // Show active sessions first
       return [...sessions].sort((a, b) => {
@@ -32,6 +33,29 @@ const MemberDashboard = () => {
       return dateString;
     }
   };
+
+  // Listen for storage events to trigger immediate UI update
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'orderSessions') {
+        refetch();
+      }
+    };
+    
+    const handleRefetchEvent = () => {
+      refetch();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('orderSessionsUpdated', handleRefetchEvent);
+    window.addEventListener('refetch-order-sessions', handleRefetchEvent);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('orderSessionsUpdated', handleRefetchEvent);
+      window.removeEventListener('refetch-order-sessions', handleRefetchEvent);
+    };
+  }, [refetch]);
 
   return (
     <div className="container py-8">

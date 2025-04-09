@@ -1,3 +1,4 @@
+
 import { OrderItem, OrderSession, UserOrder } from '../types';
 import { MENU_ITEMS, MOCK_ORDER_SESSIONS } from './mockData';
 import { toast } from '../hooks/use-toast';
@@ -11,10 +12,31 @@ const getInitialOrderSessions = (): OrderSession[] => {
 // Mock database - in reality, this would be API calls to your backend
 let orderSessions: OrderSession[] = getInitialOrderSessions();
 
-// Helper function to save sessions to localStorage
+// Helper function to save sessions to localStorage and broadcast changes
 const saveToLocalStorage = () => {
   localStorage.setItem('orderSessions', JSON.stringify(orderSessions));
+  // Dispatch a custom event to notify other tabs/windows
+  window.dispatchEvent(new CustomEvent('orderSessionsUpdated'));
 };
+
+// Set up event listener for storage changes from other tabs/windows
+if (typeof window !== 'undefined') {
+  // Listen for our custom events
+  window.addEventListener('orderSessionsUpdated', () => {
+    // Refresh from localStorage when another tab updates the data
+    const storedSessions = localStorage.getItem('orderSessions');
+    if (storedSessions) {
+      orderSessions = JSON.parse(storedSessions);
+    }
+  });
+  
+  // Also listen for direct localStorage changes
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'orderSessions' && event.newValue) {
+      orderSessions = JSON.parse(event.newValue);
+    }
+  });
+}
 
 // Get all order sessions
 export const getOrderSessions = (): Promise<OrderSession[]> => {
@@ -52,7 +74,7 @@ export const createOrderSession = (
   };
   
   orderSessions = [newSession, ...orderSessions];
-  saveToLocalStorage(); // Save to localStorage
+  saveToLocalStorage(); // Save to localStorage and broadcast changes
   return Promise.resolve({ ...newSession });
 };
 
@@ -71,7 +93,7 @@ export const toggleOrderSessionStatus = (
     isActive: !orderSessions[sessionIndex].isActive
   };
   
-  saveToLocalStorage(); // Save to localStorage
+  saveToLocalStorage(); // Save to localStorage and broadcast changes
   return Promise.resolve({ ...orderSessions[sessionIndex] });
 };
 
@@ -82,6 +104,12 @@ export const saveUserOrder = (
   userName: string,
   items: OrderItem[]
 ): Promise<OrderSession | undefined> => {
+  // Refresh from localStorage first to ensure we have the latest data
+  const storedSessions = localStorage.getItem('orderSessions');
+  if (storedSessions) {
+    orderSessions = JSON.parse(storedSessions);
+  }
+  
   const sessionIndex = orderSessions.findIndex(s => s.id === sessionId);
   
   if (sessionIndex === -1) {
@@ -126,7 +154,7 @@ export const saveUserOrder = (
   }
   
   orderSessions[sessionIndex] = session;
-  saveToLocalStorage(); // Save to localStorage
+  saveToLocalStorage(); // Save to localStorage and broadcast changes
   
   return Promise.resolve({ ...session });
 };
@@ -136,6 +164,11 @@ export const getUserOrder = (
   sessionId: string,
   userId: string
 ): Promise<UserOrder | undefined> => {
+  // Refresh from localStorage in case other tabs/windows have updated it
+  const storedSessions = localStorage.getItem('orderSessions');
+  if (storedSessions) {
+    orderSessions = JSON.parse(storedSessions);
+  }
   const session = orderSessions.find(s => s.id === sessionId);
   if (!session) return Promise.resolve(undefined);
   
@@ -147,6 +180,11 @@ export const getUserOrder = (
 export const getCompiledOrder = (
   sessionId: string
 ): Promise<Array<{item: string; quantity: number; price: number}>> => {
+  // Refresh from localStorage in case other tabs/windows have updated it
+  const storedSessions = localStorage.getItem('orderSessions');
+  if (storedSessions) {
+    orderSessions = JSON.parse(storedSessions);
+  }
   const session = orderSessions.find(s => s.id === sessionId);
   if (!session) return Promise.resolve([]);
   

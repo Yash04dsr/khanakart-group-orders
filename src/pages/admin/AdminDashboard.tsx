@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
@@ -15,14 +16,15 @@ import { PlusCircle, Calendar, Clock } from "lucide-react";
 import { getOrderSessions } from "@/services/orderService";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 const AdminDashboard = () => {
   // Using React Query to fetch order sessions with auto-refresh
-  const { data: orderSessions, isLoading } = useQuery({
+  const { data: orderSessions, isLoading, refetch } = useQuery({
     queryKey: ['orderSessions'],
     queryFn: getOrderSessions,
-    refetchInterval: 5000, // Refetch every 5 seconds for quicker updates
-    staleTime: 1000, // Consider data stale after 1 second
+    refetchInterval: 2000, // Refetch every 2 seconds for near-real-time updates
+    staleTime: 0, // Consider data always stale to trigger refetch
   });
 
   const formatDate = (dateString: string) => {
@@ -32,6 +34,29 @@ const AdminDashboard = () => {
       return dateString;
     }
   };
+
+  // Listen for storage events to trigger immediate UI update
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'orderSessions') {
+        refetch();
+      }
+    };
+    
+    const handleRefetchEvent = () => {
+      refetch();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('orderSessionsUpdated', handleRefetchEvent);
+    window.addEventListener('refetch-order-sessions', handleRefetchEvent);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('orderSessionsUpdated', handleRefetchEvent);
+      window.removeEventListener('refetch-order-sessions', handleRefetchEvent);
+    };
+  }, [refetch]);
 
   return (
     <div className="container py-8">

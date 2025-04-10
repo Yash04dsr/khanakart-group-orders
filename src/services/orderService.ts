@@ -1,7 +1,6 @@
-
 import { OrderItem, OrderSession, UserOrder } from '../types';
 import { MENU_ITEMS } from './mockData';
-import { toast } from '../hooks/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 
@@ -117,6 +116,18 @@ export const createOrderSession = async (
   deadline: string
 ): Promise<OrderSession> => {
   try {
+    // Validate deadline is a valid date
+    const deadlineDate = new Date(deadline);
+    if (isNaN(deadlineDate.getTime())) {
+      throw new Error("Invalid deadline date format");
+    }
+    
+    // Ensure deadline is in the future
+    const now = new Date();
+    if (deadlineDate <= now) {
+      throw new Error("Deadline must be in the future");
+    }
+    
     const { data, error } = await supabase
       .from('order_sessions')
       .insert([
@@ -128,10 +139,13 @@ export const createOrderSession = async (
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase insertion error:", error);
+      throw new Error(error.message || "Failed to create order session in database");
+    }
     
     if (!data) {
-      throw new Error("Failed to create order session");
+      throw new Error("No data returned from database after creating order session");
     }
 
     return {
@@ -143,7 +157,8 @@ export const createOrderSession = async (
       orders: []
     };
   } catch (error) {
-    throw error;
+    console.error("Create session error details:", error);
+    throw error; // Rethrow to let component handle it
   }
 };
 

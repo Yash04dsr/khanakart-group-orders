@@ -28,14 +28,31 @@ const CreateOrderSession = () => {
       return;
     }
 
+    // Validate that deadline is in the future
+    const deadlineDate = new Date(deadline);
+    const now = new Date();
+    
+    if (deadlineDate <= now) {
+      toast({
+        title: "Invalid deadline",
+        description: "Deadline must be in the future",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       // Format the deadline date as ISO string
-      const deadlineDate = new Date(deadline);
       const deadlineISO = deadlineDate.toISOString();
       
+      // Create the session
       const newSession = await createOrderSession(title, deadlineISO);
+      
+      if (!newSession) {
+        throw new Error("Failed to create order session");
+      }
       
       toast({
         title: "Order session created",
@@ -47,7 +64,7 @@ const CreateOrderSession = () => {
       console.error("Create session error:", error);
       toast({
         title: "Failed to create order session",
-        description: "An error occurred while creating the order session",
+        description: error instanceof Error ? error.message : "An error occurred while creating the order session",
         variant: "destructive",
       });
     } finally {

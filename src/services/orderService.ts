@@ -3,6 +3,7 @@ import { OrderItem, OrderSession, UserOrder } from '../types';
 import { MENU_ITEMS } from './mockData';
 import { toast } from '../hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Database } from '@/integrations/supabase/types';
 
 // Helper function for error handling
 const handleError = (error: any, errorMessage: string) => {
@@ -70,7 +71,7 @@ export const getOrderSession = async (sessionId: string): Promise<OrderSession |
         .in('order_id', orderIds);
 
       if (itemsError) throw itemsError;
-      orderItems = itemsData;
+      orderItems = itemsData || [];
     }
 
     // Transform and combine the data
@@ -91,6 +92,10 @@ export const getOrderSession = async (sessionId: string): Promise<OrderSession |
     });
 
     // Create the final OrderSession object
+    if (!sessionData) {
+      throw new Error("Session not found");
+    }
+    
     const orderSession: OrderSession = {
       id: sessionData.id,
       title: sessionData.title,
@@ -124,6 +129,10 @@ export const createOrderSession = async (
       .single();
 
     if (error) throw error;
+    
+    if (!data) {
+      throw new Error("Failed to create order session");
+    }
 
     return {
       id: data.id,
@@ -151,6 +160,10 @@ export const toggleOrderSessionStatus = async (
       .single();
 
     if (fetchError) throw fetchError;
+    
+    if (!current) {
+      throw new Error("Session not found");
+    }
 
     // Toggle the status
     const { data, error } = await supabase
@@ -181,7 +194,7 @@ export const toggleOrderSessionStatus = async (
         .in('order_id', orderIds);
 
       if (itemsError) throw itemsError;
-      orderItems = itemsData;
+      orderItems = itemsData || [];
     }
 
     // Transform orders and items
@@ -200,6 +213,10 @@ export const toggleOrderSessionStatus = async (
         items
       };
     });
+    
+    if (!data) {
+      throw new Error("Failed to update session status");
+    }
 
     return {
       id: data.id,
@@ -230,6 +247,10 @@ export const saveUserOrder = async (
       .single();
 
     if (sessionError) throw sessionError;
+    
+    if (!sessionData) {
+      throw new Error("Session not found");
+    }
 
     if (!sessionData.is_active) {
       toast({
@@ -290,6 +311,10 @@ export const saveUserOrder = async (
         
       if (insertError) throw insertError;
       
+      if (!newOrder) {
+        throw new Error("Failed to create order");
+      }
+      
       orderId = newOrder.id;
     } else {
       // No items and no existing order, nothing to do
@@ -346,7 +371,7 @@ export const getUserOrder = async (
     if (itemsError) throw itemsError;
 
     // Transform to application format
-    const items = itemsData.map(item => ({
+    const items = (itemsData || []).map(item => ({
       menuItemId: item.menu_item_id,
       quantity: item.quantity,
       price: item.price
@@ -391,7 +416,7 @@ export const getCompiledOrder = async (
     // Compile the order
     const compiledItems: Record<string, { quantity: number; price: number }> = {};
     
-    itemsData.forEach(item => {
+    (itemsData || []).forEach(item => {
       const itemId = item.menu_item_id;
       if (!compiledItems[itemId]) {
         compiledItems[itemId] = { quantity: 0, price: item.price };

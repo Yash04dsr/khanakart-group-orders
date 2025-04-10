@@ -6,17 +6,52 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   
   const { login } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Account created",
+        description: "Please check your email to confirm your account.",
+      });
+      
+      // Switch to login mode after successful signup
+      setIsSignUp(false);
+    } catch (error) {
+      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to create account";
+      
+      toast({
+        title: "Sign Up Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
@@ -24,9 +59,12 @@ const Login = () => {
       await login(email, password);
       navigate("/");
     } catch (error) {
+      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : "Invalid email or password";
+      
       toast({
         title: "Login Failed",
-        description: "Invalid email or password. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -44,10 +82,14 @@ const Login = () => {
         
         <Card>
           <CardHeader>
-            <CardTitle>Login</CardTitle>
-            <CardDescription>Enter your credentials to access your account</CardDescription>
+            <CardTitle>{isSignUp ? "Create Account" : "Login"}</CardTitle>
+            <CardDescription>
+              {isSignUp 
+                ? "Enter your details to create a new account" 
+                : "Enter your credentials to access your account"}
+            </CardDescription>
           </CardHeader>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={isSignUp ? handleSignUp : handleLogin}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium">Email</label>
@@ -74,7 +116,7 @@ const Login = () => {
               </div>
             </CardContent>
             
-            <CardFooter>
+            <CardFooter className="flex flex-col space-y-4">
               <Button 
                 type="submit" 
                 className="w-full bg-khanakart-primary hover:bg-khanakart-primary/90"
@@ -83,21 +125,48 @@ const Login = () => {
                 {isSubmitting ? (
                   <span className="flex items-center">
                     <span className="h-4 w-4 mr-2 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
-                    Logging in...
+                    {isSignUp ? "Creating account..." : "Logging in..."}
                   </span>
                 ) : (
-                  "Log in"
+                  isSignUp ? "Create Account" : "Log in"
                 )}
               </Button>
+              
+              <p className="text-center text-sm">
+                {isSignUp ? (
+                  <span>
+                    Already have an account?{" "}
+                    <button 
+                      type="button"
+                      className="text-khanakart-primary hover:underline" 
+                      onClick={() => setIsSignUp(false)}
+                    >
+                      Log in
+                    </button>
+                  </span>
+                ) : (
+                  <span>
+                    Don't have an account?{" "}
+                    <button 
+                      type="button"
+                      className="text-khanakart-primary hover:underline" 
+                      onClick={() => setIsSignUp(true)}
+                    >
+                      Sign up
+                    </button>
+                  </span>
+                )}
+              </p>
             </CardFooter>
           </form>
         </Card>
         
         <div className="mt-6 text-center text-sm">
           <p className="text-muted-foreground">
-            Demo credentials: <br />
-            Admin: admin@ocskhanakart.com / password <br />
-            Member: member1@iitd.ac.in / password
+            Test accounts: <br />
+            Admin: admin@ocskhanakart.com / password123 <br />
+            Member: member1@iitd.ac.in / password123 <br />
+            Member: member2@iitd.ac.in / password123
           </p>
         </div>
       </div>

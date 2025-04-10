@@ -1,6 +1,8 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User } from '../types';
+import { User as AuthUser, Session } from '@supabase/supabase-js';
+import { supabase } from '../integrations/supabase/client';
+import { User, UserRole } from '../types';
 
 interface AuthContextType {
   user: User | null;
@@ -11,63 +13,83 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demonstration
-const MOCK_USERS: User[] = [
-  {
-    id: "admin-1",
-    name: "Admin User",
-    email: "admin@ocskhanakart.com",
-    role: "admin"
-  },
-  {
-    id: "user-1",
-    name: "Team Member 1",
-    email: "member1@iitd.ac.in",
-    role: "member"
-  },
-  {
-    id: "user-2",
-    name: "Team Member 2",
-    email: "member2@iitd.ac.in",
-    role: "member"
-  }
-];
+// Helper to convert Supabase user to our app's User type
+const mapSupabaseUser = (authUser: AuthUser): User => {
+  // Assuming the first part of the email determines the role
+  const email = authUser.email || '';
+  const role: UserRole = email.startsWith('admin') ? 'admin' : 'member';
+  
+  return {
+    id: authUser.id,
+    email: email,
+    name: email.split('@')[0], // Use part of email as name for now
+    role: role
+  };
+};
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in (from localStorage or sessionStorage)
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session?.user) {
+          const mappedUser = mapSupabaseUser(session.user);
+          setUser(mappedUser);
+        } else {
+          setUser(null);
+        }
+      }
+    );
+
+    // THEN check for existing session
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          const mappedUser = mapSupabaseUser(session.user);
+          setUser(mappedUser);
+        }
+      } catch (error) {
+        console.error('Error loading auth session:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Simple mock authentication logic
-    const foundUser = MOCK_USERS.find(u => u.email === email);
-    
-    if (foundUser && password === "password") {  // In a real app, you would validate passwords securely
-      setUser(foundUser);
-      localStorage.setItem('user', JSON.stringify(foundUser));
-    } else {
-      throw new Error("Invalid email or password");
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+      
+      if (error) throw error;
+      
+      if (data.user) {
+        const mappedUser = mapSupabaseUser(data.user);
+        setUser(mappedUser);
+      }
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem('user');
   };
 
   return (

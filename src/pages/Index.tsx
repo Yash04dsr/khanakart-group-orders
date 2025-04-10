@@ -4,20 +4,23 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   
   useEffect(() => {
-    if (user) {
-      if (user.role === 'admin') {
-        navigate('/admin');
+    // Only navigate when auth state is determined (not during loading)
+    if (!isLoading) {
+      if (user) {
+        if (user.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/member');
+        }
       } else {
-        navigate('/member');
+        navigate('/login');
       }
-    } else {
-      navigate('/login');
     }
-  }, [user, navigate]);
+  }, [user, navigate, isLoading]);
   
   return (
     <div className="min-h-screen flex items-center justify-center">

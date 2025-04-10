@@ -17,14 +17,13 @@ import { getOrderSessions } from "@/services/orderService";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const AdminDashboard = () => {
-  // Using React Query to fetch order sessions with auto-refresh
+  // Using React Query to fetch order sessions
   const { data: orderSessions, isLoading, refetch } = useQuery({
     queryKey: ['orderSessions'],
     queryFn: getOrderSessions,
-    refetchInterval: 2000, // Refetch every 2 seconds for near-real-time updates
-    staleTime: 0, // Consider data always stale to trigger refetch
   });
 
   const formatDate = (dateString: string) => {
@@ -35,26 +34,29 @@ const AdminDashboard = () => {
     }
   };
 
-  // Listen for storage events to trigger immediate UI update
+  // Set up Supabase realtime subscription
   useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'orderSessions') {
-        refetch();
-      }
-    };
-    
-    const handleRefetchEvent = () => {
-      refetch();
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('orderSessionsUpdated', handleRefetchEvent);
-    window.addEventListener('refetch-order-sessions', handleRefetchEvent);
-    
+    // Subscribe to changes on order_sessions table
+    const channel = supabase
+      .channel('admin-dashboard-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'order_sessions' },
+        () => {
+          refetch();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_orders' },
+        () => {
+          refetch();
+        }
+      )
+      .subscribe();
+
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('orderSessionsUpdated', handleRefetchEvent);
-      window.removeEventListener('refetch-order-sessions', handleRefetchEvent);
+      supabase.removeChannel(channel);
     };
   }, [refetch]);
 
@@ -121,7 +123,7 @@ const AdminDashboard = () => {
                         <Badge variant="outline">Closed</Badge>
                       )}
                     </TableCell>
-                    <TableCell>{session.orders.length} orders</TableCell>
+                    <TableCell>{session.orders?.length || 0} orders</TableCell>
                     <TableCell className="text-right">
                       <Button asChild variant="outline" size="sm">
                         <Link to={`/admin/order/${session.id}`}>View Details</Link>

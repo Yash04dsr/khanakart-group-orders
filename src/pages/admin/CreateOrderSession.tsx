@@ -44,6 +44,7 @@ const CreateOrderSession = () => {
       
       navigate(`/admin/order/${newSession.id}`);
     } catch (error) {
+      console.error("Create session error:", error);
       toast({
         title: "Failed to create order session",
         description: "An error occurred while creating the order session",

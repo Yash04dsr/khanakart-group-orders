@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,8 @@ import { useAuth } from "@/context/AuthContext";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 // Helper function to group menu items by category
 const groupItemsByCategory = () => {
@@ -63,10 +66,10 @@ const MemberOrderDetail = () => {
   } = useQuery({
     queryKey: ['orderSession', sessionId],
     queryFn: () => sessionId ? getOrderSession(sessionId) : Promise.resolve(undefined),
-    refetchInterval: 10000, // Refetch every 10 seconds
     enabled: !!sessionId && !!user,
     meta: {
-      onError: () => {
+      onError: (error) => {
+        console.error("Error fetching session:", error);
         toast({
           title: "Error",
           description: "Failed to fetch order session",
@@ -102,6 +105,40 @@ const MemberOrderDetail = () => {
     }
   });
   
+  // Set up Supabase realtime subscription
+  useEffect(() => {
+    if (!sessionId || !user) return;
+    
+    const channel = supabase
+      .channel(`member-order-detail-${sessionId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'order_sessions', filter: `id=eq.${sessionId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['orderSession', sessionId] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_orders' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['userOrder', sessionId, user.id] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'order_items' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['userOrder', sessionId, user.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [sessionId, user, queryClient]);
+  
   // Save order mutation
   const { mutate: saveOrder, isPending: isSaving } = useMutation({
     mutationFn: (items: OrderItem[]) => {
@@ -121,7 +158,8 @@ const MemberOrderDetail = () => {
       queryClient.invalidateQueries({ queryKey: ['orderSession', sessionId] });
       queryClient.invalidateQueries({ queryKey: ['orderSessions'] });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Save order error:", error);
       toast({
         title: "Failed to save order",
         description: "An error occurred while saving your order",

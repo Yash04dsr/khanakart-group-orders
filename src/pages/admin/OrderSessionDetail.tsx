@@ -27,6 +27,8 @@ import { format } from "date-fns";
 import { MENU_ITEMS } from "@/services/mockData";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 const OrderSessionDetail = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -41,7 +43,6 @@ const OrderSessionDetail = () => {
   } = useQuery({
     queryKey: ['orderSession', sessionId],
     queryFn: () => sessionId ? getOrderSession(sessionId) : Promise.resolve(undefined),
-    refetchInterval: 10000, // Refetch every 10 seconds
     enabled: !!sessionId,
   });
 
@@ -52,7 +53,6 @@ const OrderSessionDetail = () => {
   } = useQuery({
     queryKey: ['compiledOrder', sessionId],
     queryFn: () => sessionId ? getCompiledOrder(sessionId) : Promise.resolve([]),
-    refetchInterval: 10000, // Refetch every 10 seconds
     enabled: !!sessionId,
   });
 
@@ -77,7 +77,8 @@ const OrderSessionDetail = () => {
         queryClient.invalidateQueries({ queryKey: ['orderSessions'] });
       }
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Error updating session status:", error);
       toast({
         title: "Error",
         description: "Failed to update order status",
@@ -85,6 +86,42 @@ const OrderSessionDetail = () => {
       });
     },
   });
+
+  // Set up Supabase realtime subscription
+  useEffect(() => {
+    if (!sessionId) return;
+
+    const channel = supabase
+      .channel(`order-session-${sessionId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'order_sessions', filter: `id=eq.${sessionId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['orderSession', sessionId] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_orders' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['orderSession', sessionId] });
+          queryClient.invalidateQueries({ queryKey: ['compiledOrder', sessionId] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'order_items' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['orderSession', sessionId] });
+          queryClient.invalidateQueries({ queryKey: ['compiledOrder', sessionId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [sessionId, queryClient]);
 
   const formatDate = (dateString: string) => {
     try {

@@ -9,7 +9,97 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      order_items: {
+        Row: {
+          id: string
+          menu_item_id: string
+          order_id: string
+          price: number
+          quantity: number
+        }
+        Insert: {
+          id?: string
+          menu_item_id: string
+          order_id: string
+          price: number
+          quantity: number
+        }
+        Update: {
+          id?: string
+          menu_item_id?: string
+          order_id?: string
+          price?: number
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "user_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_sessions: {
+        Row: {
+          created_at: string
+          deadline: string
+          id: string
+          is_active: boolean
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          deadline: string
+          id?: string
+          is_active?: boolean
+          title: string
+        }
+        Update: {
+          created_at?: string
+          deadline?: string
+          id?: string
+          is_active?: boolean
+          title?: string
+        }
+        Relationships: []
+      }
+      user_orders: {
+        Row: {
+          created_at: string
+          id: string
+          session_id: string
+          updated_at: string
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          session_id: string
+          updated_at?: string
+          user_id: string
+          user_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          session_id?: string
+          updated_at?: string
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_orders_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "order_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

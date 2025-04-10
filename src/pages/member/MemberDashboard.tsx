@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,14 +9,16 @@ import { getOrderSessions } from "@/services/orderService";
 import { OrderSession } from "@/types";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const MemberDashboard = () => {
-  // Using React Query to fetch order sessions with auto-refresh
+  const { user } = useAuth();
+  
+  // Using React Query to fetch order sessions
   const { data: orderSessions, isLoading, refetch } = useQuery({
     queryKey: ['orderSessions'],
     queryFn: getOrderSessions,
-    refetchInterval: 2000, // Refetch every 2 seconds for near-real-time updates
-    staleTime: 0, // Consider data always stale to trigger refetch
     select: (sessions) => {
       // Show active sessions first
       return [...sessions].sort((a, b) => {
@@ -34,26 +37,29 @@ const MemberDashboard = () => {
     }
   };
 
-  // Listen for storage events to trigger immediate UI update
+  // Set up Supabase realtime subscription
   useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'orderSessions') {
-        refetch();
-      }
-    };
-    
-    const handleRefetchEvent = () => {
-      refetch();
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('orderSessionsUpdated', handleRefetchEvent);
-    window.addEventListener('refetch-order-sessions', handleRefetchEvent);
-    
+    // Subscribe to changes on order_sessions table
+    const channel = supabase
+      .channel('member-dashboard-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'order_sessions' },
+        () => {
+          refetch();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_orders' },
+        () => {
+          refetch();
+        }
+      )
+      .subscribe();
+
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('orderSessionsUpdated', handleRefetchEvent);
-      window.removeEventListener('refetch-order-sessions', handleRefetchEvent);
+      supabase.removeChannel(channel);
     };
   }, [refetch]);
 
@@ -106,7 +112,7 @@ const MemberDashboard = () => {
               <CardContent className="flex justify-between items-center">
                 <div>
                   {/* Check if the user has already ordered for this session */}
-                  {session.orders.some((order) => order.userId === "user-1") && (
+                  {user && session.orders.some((order) => order.userId === user.id) && (
                     <Badge variant="secondary" className="mr-2">
                       You've placed an order
                     </Badge>

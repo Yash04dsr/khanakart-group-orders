@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { createOrderSession } from "@/services/orderService";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Calendar } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const CreateOrderSession = () => {
   const [title, setTitle] = useState("");
@@ -15,6 +16,7 @@ const CreateOrderSession = () => {
   
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,9 +64,18 @@ const CreateOrderSession = () => {
       navigate(`/admin/order/${newSession.id}`);
     } catch (error) {
       console.error("Create session error:", error);
+      
+      // Check for specific database permission error
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
+      let description = errorMessage;
+      
+      if (errorMessage.includes("permission denied") || errorMessage.toLowerCase().includes("permission")) {
+        description = "Database permission error. Please make sure you're properly authenticated and have the necessary permissions.";
+      }
+      
       toast({
         title: "Failed to create order session",
-        description: error instanceof Error ? error.message : "An error occurred while creating the order session",
+        description: description,
         variant: "destructive",
       });
     } finally {

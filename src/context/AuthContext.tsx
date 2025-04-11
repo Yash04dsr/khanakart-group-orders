@@ -15,9 +15,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Helper to convert Supabase user to our app's User type
 const mapSupabaseUser = (authUser: AuthUser): User => {
-  // Assuming the first part of the email determines the role
+  // Check for specific admin emails, otherwise assign member role
   const email = authUser.email || '';
-  const role: UserRole = email.startsWith('admin') ? 'admin' : 'member';
+  let role: UserRole = 'member';
+  
+  if (email.startsWith('admin') || email === 'yashsakhare.iitd@gmail.com') {
+    role = 'admin';
+  }
   
   return {
     id: authUser.id,

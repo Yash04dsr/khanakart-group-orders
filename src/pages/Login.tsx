@@ -84,6 +84,36 @@ const Login = () => {
     setPassword("password123");
   };
 
+  // Added a quick login function for the button in Quick Login tab
+  const handleQuickLogin = async () => {
+    if (!email || !password) {
+      toast({
+        title: "Missing Credentials",
+        description: "Please select credentials first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      await login(email, password);
+      navigate("/");
+    } catch (error) {
+      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : "Invalid email or password";
+      
+      toast({
+        title: "Login Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-secondary p-4">
       <div className="w-full max-w-md">
@@ -248,7 +278,7 @@ const Login = () => {
               </CardContent>
               <CardFooter>
                 <Button 
-                  onClick={handleLogin}
+                  onClick={handleQuickLogin}
                   className="w-full bg-khanakart-primary hover:bg-khanakart-primary/90"
                   disabled={isSubmitting || !email || !password}
                 >

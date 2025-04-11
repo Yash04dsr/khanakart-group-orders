@@ -46,15 +46,20 @@ const CreateOrderSession = () => {
     setIsSubmitting(true);
 
     try {
+      if (!user) {
+        throw new Error("You must be logged in to create an order session");
+      }
+      
+      // Verify admin privileges
+      if (user.role !== "admin") {
+        throw new Error("Only admins can create order sessions");
+      }
+
       // Format the deadline date as ISO string
       const deadlineISO = deadlineDate.toISOString();
       
       // Create the session
       const newSession = await createOrderSession(title, deadlineISO);
-      
-      if (!newSession) {
-        throw new Error("Failed to create order session");
-      }
       
       toast({
         title: "Order session created",
@@ -70,7 +75,7 @@ const CreateOrderSession = () => {
       let description = errorMessage;
       
       if (errorMessage.includes("permission denied") || errorMessage.toLowerCase().includes("permission")) {
-        description = "Database permission error. Please make sure you're properly authenticated and have the necessary permissions.";
+        description = "Database permission error. Please make sure you're properly authenticated as an admin and have the necessary permissions.";
       }
       
       toast({

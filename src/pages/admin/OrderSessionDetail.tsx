@@ -23,7 +23,7 @@ import {
   getCompiledOrder, 
   toggleOrderSessionStatus 
 } from "@/services/orderService";
-import { ArrowLeft, UserCircle, ClipboardList, AlertTriangle, CheckCircle, Ban } from "lucide-react";
+import { ArrowLeft, UserCircle, ClipboardList, AlertTriangle, CheckCircle, Ban, Clipboard, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { MENU_ITEMS } from "@/services/mockData";
 import { useToast } from "@/hooks/use-toast";
@@ -145,6 +145,95 @@ const OrderSessionDetail = () => {
   // Calculate grand total for compiled order
   const calculateGrandTotal = () => {
     return compiledOrder.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+  };
+
+  // Copy order to clipboard
+  const copyOrderToClipboard = () => {
+    if (compiledOrder.length === 0) {
+      toast({
+        title: "No items to copy",
+        description: "There are no items in the order to copy",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Format the order as requested: ItemName - Quantity
+    const formattedOrder = compiledOrder
+      .map(item => `${item.item} - ${item.quantity}`)
+      .join('\n');
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(formattedOrder)
+      .then(() => {
+        toast({
+          title: "Order copied to clipboard",
+          description: "The order has been copied to your clipboard",
+        });
+      })
+      .catch(err => {
+        console.error("Clipboard write failed:", err);
+        toast({
+          title: "Copy failed",
+          description: "Could not copy the order to clipboard",
+          variant: "destructive",
+        });
+      });
+  };
+
+  // Export order as CSV
+  const exportOrderAsCSV = () => {
+    if (compiledOrder.length === 0) {
+      toast({
+        title: "No items to export",
+        description: "There are no items in the order to export",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // CSV Headers
+    const headers = ["Item", "Category", "Unit Price", "Quantity", "Total"];
+    
+    // CSV Rows
+    const rows = compiledOrder.map(item => {
+      const menuItem = MENU_ITEMS.find(mi => mi.name === item.item);
+      const itemPrice = parseFloat(item.price.toString());
+      const itemQuantity = parseFloat(item.quantity.toString());
+      
+      return [
+        item.item,
+        menuItem?.category.replace('_', ' ') || 'Unknown',
+        itemPrice.toFixed(2),
+        itemQuantity.toString(),
+        (itemQuantity * itemPrice).toFixed(2)
+      ];
+    });
+    
+    // Add Grand Total row
+    rows.push(['', '', '', 'Grand Total', calculateGrandTotal().toFixed(2)]);
+    
+    // Convert to CSV format
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+    
+    // Create Blob and download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${orderSession?.title || 'order'}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "CSV Export Success",
+      description: "The order has been exported as a CSV file",
+    });
   };
 
   const isLoading = isSessionLoading || isCompiledLoading;
@@ -287,7 +376,20 @@ const OrderSessionDetail = () => {
                   </Table>
 
                   <div className="mt-6 flex justify-end">
-                    <Button variant="outline" className="mr-4">
+                    <Button 
+                      variant="outline" 
+                      className="mr-4"
+                      onClick={copyOrderToClipboard}
+                    >
+                      <Clipboard className="mr-2 h-4 w-4" />
+                      Copy Order
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="mr-4"
+                      onClick={exportOrderAsCSV}
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
                       Export as CSV
                     </Button>
                     <Button>

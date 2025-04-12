@@ -8,6 +8,7 @@ import { createOrderSession } from "@/services/orderService";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Calendar } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const CreateOrderSession = () => {
   const [title, setTitle] = useState("");
@@ -64,6 +65,14 @@ const CreateOrderSession = () => {
       toast({
         title: "Order session created",
         description: "New order session has been created successfully",
+      });
+      
+      // Update Supabase realtime for other users
+      const channel = supabase.channel('admin-dashboard');
+      channel.send({
+        type: 'broadcast',
+        event: 'session-created',
+        payload: { session: newSession },
       });
       
       navigate(`/admin/order/${newSession.id}`);

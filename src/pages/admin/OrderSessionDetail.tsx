@@ -159,9 +159,9 @@ const OrderSessionDetail = () => {
     }
     
     // Format the order as requested: ItemName - Quantity
-    const formattedOrder = compiledOrder
-      .map(item => `${item.item} - ${item.quantity}`)
-      .join('\n');
+      const formattedOrder = compiledOrder
+        .map(item => `${item.item} - ${item.quantity}`)
+        .join('\n') + '\n';
     
     // Copy to clipboard
     navigator.clipboard.writeText(formattedOrder)
@@ -391,9 +391,6 @@ const OrderSessionDetail = () => {
                     >
                       <FileText className="mr-2 h-4 w-4" />
                       Export as CSV
-                    </Button>
-                    <Button>
-                      Print Order
                     </Button>
                   </div>
                 </>

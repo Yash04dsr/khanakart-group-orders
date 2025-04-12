@@ -35,4 +35,5 @@ export interface OrderSession {
   deadline: string;
   isActive: boolean;
   orders: UserOrder[];
+  orderCount?: number; // Add this optional field for order count
 }

@@ -1,3 +1,4 @@
+
 import { OrderItem, OrderSession, UserOrder } from '../types';
 import { MENU_ITEMS } from './mockData';
 import { toast } from '@/components/ui/use-toast';
@@ -20,7 +21,7 @@ export const getOrderSessions = async (): Promise<OrderSession[]> => {
   try {
     const { data, error } = await supabase
       .from('order_sessions')
-      .select('*')
+      .select('*, user_orders(count)')
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -32,7 +33,8 @@ export const getOrderSessions = async (): Promise<OrderSession[]> => {
       createdAt: session.created_at,
       deadline: session.deadline,
       isActive: session.is_active,
-      orders: [] // Will be populated when needed for specific session
+      orders: [], // Will be populated when needed for specific session
+      orderCount: session.user_orders?.[0]?.count || 0
     }));
   } catch (error) {
     return handleError(error, "Failed to fetch order sessions") || [];

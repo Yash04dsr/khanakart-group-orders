@@ -123,7 +123,7 @@ const AdminDashboard = () => {
                         <Badge variant="outline">Closed</Badge>
                       )}
                     </TableCell>
-                    <TableCell>{session.orders?.length || 0} orders</TableCell>
+                    <TableCell>{session.orderCount || 0} orders</TableCell>
                     <TableCell className="text-right">
                       <Button asChild variant="outline" size="sm">
                         <Link to={`/admin/order/${session.id}`}>View Details</Link>

@@ -24,10 +24,14 @@ const mapSupabaseUser = (authUser: AuthUser): User => {
     role = 'admin';
   }
   
+  // Get name from user metadata if available, otherwise fallback to email
+  const userData = authUser.user_metadata || {};
+  const name = userData.name || email.split('@')[0];
+  
   return {
     id: authUser.id,
     email: email,
-    name: email.split('@')[0], // Use part of email as name for now
+    name: name,
     role: role
   };
 };

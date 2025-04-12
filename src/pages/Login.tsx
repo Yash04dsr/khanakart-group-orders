@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   
@@ -23,9 +24,19 @@ const Login = () => {
     setIsSubmitting(true);
     
     try {
+      // Validate name field
+      if (!name.trim()) {
+        throw new Error("Name is required");
+      }
+      
       const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            name: name.trim()
+          }
+        }
       });
       
       if (error) throw error;
@@ -91,6 +102,20 @@ const Login = () => {
           </CardHeader>
           <form onSubmit={isSignUp ? handleSignUp : handleLogin}>
             <CardContent className="space-y-4">
+              {isSignUp && (
+                <div className="space-y-2">
+                  <label htmlFor="name" className="text-sm font-medium">Name</label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Your name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
+              
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium">Email</label>
                 <Input

@@ -78,7 +78,7 @@ const MemberDashboard = () => {
   return (
     <div className="container py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Available Orders</h1>
+        <h1 className="text-3xl font-bold">Hi {user?.name || "there"}! 👋</h1>
         <p className="text-muted-foreground mt-2">
           Select an order session to place your food order
         </p>

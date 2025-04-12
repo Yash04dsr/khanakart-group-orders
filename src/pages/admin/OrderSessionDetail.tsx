@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -257,16 +258,19 @@ const OrderSessionDetail = () => {
                     <TableBody>
                       {compiledOrder.map((item, index) => {
                         const menuItem = MENU_ITEMS.find(mi => mi.name === item.item);
+                        const itemPrice = parseFloat(item.price.toString());
+                        const itemQuantity = parseFloat(item.quantity.toString());
+                        
                         return (
                           <TableRow key={index}>
                             <TableCell className="font-medium">{item.item}</TableCell>
                             <TableCell>
                               {menuItem?.category.replace('_', ' ')}
                             </TableCell>
-                            <TableCell className="text-right">₹{item.price}</TableCell>
-                            <TableCell className="text-right">{item.quantity}</TableCell>
+                            <TableCell className="text-right">₹{itemPrice.toFixed(2)}</TableCell>
+                            <TableCell className="text-right">{itemQuantity}</TableCell>
                             <TableCell className="text-right font-medium">
-                              ₹{(item.quantity * item.price).toFixed(2)}
+                              ₹{(itemQuantity * itemPrice).toFixed(2)}
                             </TableCell>
                           </TableRow>
                         );
@@ -326,19 +330,22 @@ const OrderSessionDetail = () => {
                       <TableBody>
                         {order.items.map((item, index) => {
                           const menuItem = getItemById(item.menuItemId);
+                          const itemQuantity = parseFloat(item.quantity.toString());
+                          const itemPrice = parseFloat(item.price.toString());
+                          
                           return (
                             <TableRow key={index}>
                               <TableCell>
                                 {menuItem?.name || "Unknown Item"}
                               </TableCell>
                               <TableCell className="text-right">
-                                {item.quantity}
+                                {itemQuantity}
                               </TableCell>
                               <TableCell className="text-right">
-                                ₹{item.price}
+                                ₹{itemPrice.toFixed(2)}
                               </TableCell>
                               <TableCell className="text-right font-medium">
-                                ₹{(item.quantity * item.price).toFixed(2)}
+                                ₹{(itemQuantity * itemPrice).toFixed(2)}
                               </TableCell>
                             </TableRow>
                           );

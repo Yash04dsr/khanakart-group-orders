@@ -37,21 +37,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Function to refresh user data
-  const refreshUser = async () => {
+  const refreshUser = async (): Promise<void> => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session?.user) {
         const mappedUser = mapSupabaseUser(session.user);
         setUser(mappedUser);
-        return mappedUser;
       } else {
         setUser(null);
-        return null;
       }
     } catch (error) {
       console.error('Error refreshing user data:', error);
-      return null;
     }
   };
 

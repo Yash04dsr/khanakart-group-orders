@@ -56,12 +56,24 @@ const MemberDashboard = () => {
           refetch();
         }
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'order_items' },
+        () => {
+          refetch();
+        }
+      )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
   }, [refetch]);
+
+  // Helper function to check if the user has placed an order
+  const hasUserPlacedOrder = (session: OrderSession) => {
+    return user && session.orders && session.orders.some(order => order.userId === user.id);
+  };
 
   return (
     <div className="container py-8">
@@ -111,8 +123,7 @@ const MemberDashboard = () => {
               </CardHeader>
               <CardContent className="flex justify-between items-center">
                 <div>
-                  {/* Check if the user has already ordered for this session */}
-                  {user && session.orders.some((order) => order.userId === user.id) && (
+                  {hasUserPlacedOrder(session) && (
                     <Badge variant="secondary" className="mr-2">
                       You've placed an order
                     </Badge>
@@ -121,10 +132,11 @@ const MemberDashboard = () => {
                 <Button 
                   asChild 
                   variant={session.isActive ? "default" : "outline"} 
-                  disabled={!session.isActive}
                 >
                   <Link to={`/member/order/${session.id}`}>
-                    {session.isActive ? "Place Order" : "View Order"}
+                    {session.isActive ? 
+                      (hasUserPlacedOrder(session) ? "Update Order" : "Place Order") 
+                      : "View Order"}
                     <ChevronRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>

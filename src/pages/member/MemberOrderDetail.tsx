@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +25,6 @@ import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
 
 // Helper function to group menu items by category
 const groupItemsByCategory = () => {
@@ -55,6 +54,7 @@ const MemberOrderDetail = () => {
   const queryClient = useQueryClient();
   
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [initialized, setInitialized] = useState(false);
   
   // Group menu items by category
   const itemsByCategory = groupItemsByCategory();
@@ -91,19 +91,21 @@ const MemberOrderDetail = () => {
       return getUserOrder(sessionId, user.id);
     },
     enabled: !!sessionId && !!user,
-    meta: {
-      onSuccess: (data: any) => {
-        if (data) {
-          // Initialize quantities state from user order
-          const initialQuantities: Record<string, number> = {};
-          data.items.forEach((item: OrderItem) => {
-            initialQuantities[item.menuItemId] = item.quantity;
-          });
-          setQuantities(initialQuantities);
-        }
-      }
-    }
   });
+  
+  // Initialize quantities state from user order
+  useEffect(() => {
+    if (userOrder && !initialized) {
+      const initialQuantities: Record<string, number> = {};
+      
+      userOrder.items.forEach((item) => {
+        initialQuantities[item.menuItemId] = item.quantity;
+      });
+      
+      setQuantities(initialQuantities);
+      setInitialized(true);
+    }
+  }, [userOrder, initialized]);
   
   // Set up Supabase realtime subscription
   useEffect(() => {

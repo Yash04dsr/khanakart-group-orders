@@ -23,15 +23,20 @@ const AppHeader = () => {
   return (
     <header
       className={`sticky top-0 z-50 w-full border-b backdrop-blur ${
-        onLanding || !user
-          ? "bg-[#F7F4EE]/90 border-khanakart-dark/10"
-          : "bg-background/95"
+        onLanding
+          ? "bg-khanakart-dark/80 border-white/10"
+          : !user
+            ? "bg-[#F7F4EE]/90 border-khanakart-dark/10"
+            : "bg-background/95"
       }`}
     >
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
-          <ShoppingBag className="h-6 w-6 text-khanakart-primary" />
-          <Link to="/" className="font-display font-semibold text-xl text-khanakart-primary">
+          <ShoppingBag className={`h-6 w-6 ${onLanding ? "text-khanakart-primary" : "text-khanakart-primary"}`} />
+          <Link
+            to="/"
+            className={`font-display font-semibold text-xl ${onLanding ? "text-white" : "text-khanakart-primary"}`}
+          >
             KhanaKart
           </Link>
         </div>
@@ -48,31 +53,41 @@ const AppHeader = () => {
                 <Avatar className="h-8 w-8 bg-khanakart-primary text-white">
                   <AvatarFallback>{getUserInitials()}</AvatarFallback>
                 </Avatar>
-                <span className="text-sm hidden sm:inline">
+                <span className={`text-sm hidden sm:inline ${onLanding ? "text-white/80" : ""}`}>
                   {user.name}{" "}
                   {user.role === "admin" && (
                     <span className="text-khanakart-primary">(Admin)</span>
                   )}
                 </span>
               </div>
-              <Button variant="ghost" size="icon" onClick={logout} aria-label="Logout">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={logout}
+                aria-label="Logout"
+                className={onLanding ? "text-white hover:bg-white/10 hover:text-white" : ""}
+              >
                 <LogOut className="h-5 w-5" />
               </Button>
             </>
           ) : (
             <>
               {onLanding && (
-                <nav className="hidden sm:flex items-center gap-6 text-sm text-khanakart-dark/70 mr-2">
-                  <a href="#how-it-works" className="hover:text-khanakart-dark">
-                    How it works
+                <nav className="hidden sm:flex items-center gap-6 text-sm text-white/70 mr-2">
+                  <a href="#pitch" className="hover:text-white">
+                    The pitch
                   </a>
-                  <a href="#features" className="hover:text-khanakart-dark">
-                    Why KhanaKart
+                  <a href="#how-it-works" className="hover:text-white">
+                    How it works
                   </a>
                 </nav>
               )}
               {!onLogin && (
-                <Button asChild variant="ghost" className="hidden sm:inline-flex">
+                <Button
+                  asChild
+                  variant="ghost"
+                  className={`hidden sm:inline-flex ${onLanding ? "text-white hover:bg-white/10 hover:text-white" : ""}`}
+                >
                   <Link to="/login">Log in</Link>
                 </Button>
               )}

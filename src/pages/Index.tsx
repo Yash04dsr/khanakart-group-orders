@@ -3,57 +3,83 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
-  Clock,
   ClipboardList,
   Users,
-  UtensilsCrossed,
-  CheckCircle2,
-  Timer,
   ShoppingBag,
-  MessageCircle,
-  GraduationCap,
+  Zap,
+  Ban,
+  Sparkles,
 } from "lucide-react";
+
+const outlets = [
+  "Canteen",
+  "Cafe",
+  "Night shop",
+  "Juice stall",
+  "Bakery",
+  "Hostel mess",
+  "Club dinner",
+  "Lab lunch",
+  "Sports night",
+  "Fest stall",
+];
 
 const Index = () => {
   const { user } = useAuth();
   const dashboardHref = user?.role === "admin" ? "/admin" : "/member";
   const primaryCta = user
-    ? { to: dashboardHref, label: "Open your dashboard" }
-    : { to: "/login?signup=1", label: "Join your campus group" };
+    ? { to: dashboardHref, label: "Open dashboard" }
+    : { to: "/login?signup=1", label: "Start a session free" };
 
   return (
-    <div className="bg-[#F7F4EE] text-khanakart-dark">
-      <section className="relative">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(230,57,70,0.12),_transparent_50%),radial-gradient(ellipse_at_bottom_left,_rgba(69,123,157,0.12),_transparent_45%)]" />
-        <div className="container relative py-16 md:py-24">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+    <div className="bg-khanakart-dark text-white overflow-x-hidden">
+      <section className="relative min-h-[calc(100vh-4rem)] flex items-center">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-24 right-[-10%] h-[28rem] w-[28rem] rounded-full bg-khanakart-primary/30 blur-3xl" />
+          <div className="absolute bottom-0 left-[-8%] h-[22rem] w-[22rem] rounded-full bg-khanakart-neutral/25 blur-3xl" />
+        </div>
+
+        <div className="container relative py-16 md:py-20">
+          <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-12 lg:gap-10 items-center">
             <div>
-              <p className="inline-flex items-center gap-2 rounded-full border border-khanakart-dark/10 bg-white px-3 py-1 text-sm font-medium text-khanakart-neutral">
-                <GraduationCap className="h-3.5 w-3.5" />
-                Group ordering for any outlet on campus
+              <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-khanakart-accent">
+                <Sparkles className="h-3.5 w-3.5" />
+                The campus group-order pitch
               </p>
-              <h1 className="mt-6 font-display text-4xl md:text-6xl leading-[1.08] tracking-tight">
-                Collect the group order. Then place it. No hustle.
+              <h1 className="mt-6 font-display text-5xl sm:text-6xl lg:text-7xl leading-[0.95] tracking-tight">
+                Stop being
+                <br />
+                the order collector.
               </h1>
-              <p className="mt-5 text-lg md:text-xl text-khanakart-dark/70 max-w-xl">
-                KhanaKart is for campus groups — hostels, clubs, labs, teams — ordering from{" "}
-                <span className="text-khanakart-dark font-medium">any outlet on campus</span>
-                : canteen, cafe, night shop, whatever you already eat from. Everyone adds their own items. You get one combined list, then you place the order.
+              <p className="mt-6 text-lg sm:text-xl text-white/70 max-w-xl">
+                KhanaKart is the shared cart for campus. Any outlet. Everyone adds their own plate. You place{" "}
+                <span className="text-white font-semibold">one combined order</span> — and get your night back.
               </p>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Button asChild size="lg" className="bg-khanakart-primary hover:bg-khanakart-primary/90 text-white rounded-full px-6">
+              <div className="mt-9 flex flex-wrap gap-3">
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-12 bg-khanakart-primary hover:bg-khanakart-primary/90 text-white rounded-full px-7 text-base shadow-[0_0_40px_rgba(230,57,70,0.45)]"
+                >
                   <Link to={primaryCta.to}>
                     {primaryCta.label}
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="rounded-full border-khanakart-dark/20 bg-white">
-                  <a href="#how-it-works">See how a session works</a>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="h-12 rounded-full border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white px-7"
+                >
+                  <a href="#pitch">See the pitch</a>
                 </Button>
               </div>
-              <p className="mt-4 text-sm text-khanakart-dark/50">
-                Not a delivery app. A shared cart for the outlet your campus group already uses.
-              </p>
+              <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-white/55">
+                <span>Any campus outlet</span>
+                <span>Live group session</span>
+                <span>One list → one order</span>
+              </div>
             </div>
 
             <HeroPreview />
@@ -61,111 +87,123 @@ const Index = () => {
         </div>
       </section>
 
-      <section className="container pb-8">
-        <div className="grid sm:grid-cols-3 gap-4">
-          {[
-            { icon: MessageCircle, title: "Skip the collection hustle", body: "No chasing “what do you want?” across chat. People add their own items." },
-            { icon: Users, title: "Any campus outlet", body: "Canteen, cafe, night shop, bakery — open a session for wherever the group is ordering." },
-            { icon: UtensilsCrossed, title: "Then place one order", body: "You get names, items, and totals in one list — then you call or walk up to the outlet." },
-          ].map((item) => (
-            <div key={item.title} className="rounded-2xl border border-khanakart-dark/10 bg-white p-5">
-              <item.icon className="h-5 w-5 text-khanakart-primary" />
-              <h3 className="mt-3 font-semibold">{item.title}</h3>
-              <p className="mt-1.5 text-sm text-khanakart-dark/70">{item.body}</p>
-            </div>
+      <div className="border-y border-white/10 bg-black/20 py-4 overflow-hidden">
+        <div className="flex w-max animate-marquee gap-10 whitespace-nowrap text-sm font-medium uppercase tracking-[0.22em] text-white/50">
+          {[...outlets, ...outlets].map((name, i) => (
+            <span key={`${name}-${i}`} className="flex items-center gap-10">
+              {name}
+              <span className="text-khanakart-primary">●</span>
+            </span>
           ))}
         </div>
-      </section>
+      </div>
 
-      <section id="how-it-works" className="container py-16 md:py-24 scroll-mt-20">
-        <div className="max-w-2xl">
-          <p className="text-sm font-semibold uppercase tracking-wider text-khanakart-primary">How it works</p>
-          <h2 className="mt-2 font-display text-3xl md:text-4xl">Collect first. Order once.</h2>
-        </div>
-        <div className="mt-10 grid md:grid-cols-3 gap-6">
-          {[
-            {
-              step: "01",
-              icon: ClipboardList,
-              title: "Open a session for an outlet",
-              body: "Name the outlet and set a cutoff — hostel night canteen, campus cafe, club dinner, lab lunch, anything on campus.",
-            },
-            {
-              step: "02",
-              icon: Users,
-              title: "The group adds their items",
-              body: "Everyone logs in and submits their own plate. No coordinator typing ten different orders by hand.",
-            },
-            {
-              step: "03",
-              icon: ShoppingBag,
-              title: "Place the combined order",
-              body: "When the deadline hits, you have one list: who ordered what, and the total. Then you place that single order at the outlet.",
-            },
-          ].map((item) => (
-            <div key={item.step} className="rounded-2xl border border-khanakart-dark/10 bg-white p-6 shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-khanakart-neutral">{item.step}</span>
-                <item.icon className="h-5 w-5 text-khanakart-primary" />
-              </div>
-              <h3 className="mt-4 font-display text-2xl">{item.title}</h3>
-              <p className="mt-2 text-khanakart-dark/70">{item.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section id="features" className="bg-khanakart-dark text-white">
-        <div className="container py-16 md:py-24">
-          <div className="max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-wider text-khanakart-accent">Built for campus groups</p>
-            <h2 className="mt-2 font-display text-3xl md:text-4xl">Any outlet. One group. Zero collection drama.</h2>
-            <p className="mt-4 text-white/70">
-              This is not Swiggy. It is the shared cart for people who already eat together on campus and still waste twenty minutes collecting orders.
-            </p>
+      <section id="pitch" className="scroll-mt-20">
+        <div className="container py-20 md:py-28">
+          <div className="max-w-3xl">
+            <p className="text-khanakart-primary font-semibold uppercase tracking-[0.2em] text-xs">The problem</p>
+            <h2 className="mt-3 font-display text-4xl md:text-5xl leading-tight">
+              Campus groups already know where to eat. The hustle is collecting the order.
+            </h2>
           </div>
-          <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+
+          <div className="mt-12 grid md:grid-cols-2 gap-6">
+            <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-8">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
+                <Ban className="h-5 w-5 text-white/70" />
+              </div>
+              <h3 className="mt-5 font-display text-2xl">The old way</h3>
+              <ul className="mt-4 space-y-3 text-white/65">
+                <li>“What do you want?” × 12 in the group chat</li>
+                <li>Someone changes their mind at the counter</li>
+                <li>You still don’t know who owes for the extra fries</li>
+                <li>You are the unpaid waiter for your hostel floor</li>
+              </ul>
+            </div>
+            <div className="rounded-3xl border border-khanakart-primary/40 bg-khanakart-primary/10 p-8">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-khanakart-primary">
+                <Zap className="h-5 w-5 text-white" />
+              </div>
+              <h3 className="mt-5 font-display text-2xl">The KhanaKart way</h3>
+              <ul className="mt-4 space-y-3 text-white/85">
+                <li>Open a session. Name any campus outlet.</li>
+                <li>Everyone adds their own items before the cutoff</li>
+                <li>You get one named list and a total</li>
+                <li>Then you place the order. That’s the whole product.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="how-it-works" className="bg-[#F7F4EE] text-khanakart-dark scroll-mt-20">
+        <div className="container py-20 md:py-28">
+          <p className="text-khanakart-primary font-semibold uppercase tracking-[0.2em] text-xs">How it works</p>
+          <h2 className="mt-3 font-display text-4xl md:text-5xl max-w-2xl leading-tight">
+            Three moves. Dinner is handled.
+          </h2>
+          <div className="mt-14 grid md:grid-cols-3 gap-10">
             {[
-              { icon: Timer, title: "Hard deadlines", body: "Sessions close on time so you are not still collecting orders while standing at the counter." },
-              { icon: Users, title: "Named plates", body: "Each person owns their items. Split bills and “who got the extra fries” stay obvious." },
-              { icon: CheckCircle2, title: "Live as people join", body: "New items show up as soon as someone submits — useful while the rest of the hostel is still deciding." },
-              { icon: Clock, title: "A record of past sessions", body: "Last night’s canteen run and yesterday’s club order stay on the dashboard." },
-            ].map((feature) => (
-              <div key={feature.title} className="rounded-2xl bg-white/5 border border-white/10 p-5">
-                <feature.icon className="h-5 w-5 text-khanakart-accent" />
-                <h3 className="mt-4 font-semibold text-lg">{feature.title}</h3>
-                <p className="mt-2 text-sm text-white/70">{feature.body}</p>
+              {
+                n: "01",
+                icon: ClipboardList,
+                title: "Open it",
+                body: "Pick the outlet — canteen, cafe, night shop, wherever. Set a deadline.",
+              },
+              {
+                n: "02",
+                icon: Users,
+                title: "They add",
+                body: "The group dumps their plates into the session. You stop pinging people.",
+              },
+              {
+                n: "03",
+                icon: ShoppingBag,
+                title: "You order",
+                body: "One combined ticket. Walk up, call, or send it. You’re done.",
+              },
+            ].map((step) => (
+              <div key={step.n}>
+                <p className="font-display text-5xl text-khanakart-primary/80">{step.n}</p>
+                <div className="mt-4 flex items-center gap-2">
+                  <step.icon className="h-5 w-5 text-khanakart-primary" />
+                  <h3 className="font-display text-2xl">{step.title}</h3>
+                </div>
+                <p className="mt-3 text-khanakart-dark/70 text-lg">{step.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="container py-16 md:py-24">
-        <div className="rounded-3xl bg-white border border-khanakart-dark/10 px-8 py-12 md:px-14 md:py-16 flex flex-col md:flex-row md:items-center md:justify-between gap-8">
-          <div className="max-w-xl">
-            <h2 className="font-display text-3xl md:text-4xl">Next campus order, minus the hustle.</h2>
-            <p className="mt-3 text-khanakart-dark/70">
-              Open a session for whatever outlet you are using, let the group add items, then place one combined order.
+      <section id="features" className="scroll-mt-20">
+        <div className="container py-20 md:py-28">
+          <div className="rounded-[2rem] bg-khanakart-primary px-8 py-14 md:px-16 md:py-20 text-center">
+            <p className="text-white/80 font-semibold uppercase tracking-[0.2em] text-xs">Ready when the group is hungry</p>
+            <h2 className="mt-4 font-display text-4xl md:text-6xl leading-tight max-w-3xl mx-auto">
+              Tonight, don’t collect the order. Launch it.
+            </h2>
+            <p className="mt-5 text-lg text-white/85 max-w-xl mx-auto">
+              Any outlet on campus. One session. Everyone in. One order out.
             </p>
-          </div>
-          <div className="flex flex-wrap gap-3 shrink-0">
-            <Button asChild size="lg" className="bg-khanakart-primary hover:bg-khanakart-primary/90 text-white rounded-full px-6">
-              <Link to={primaryCta.to}>{user ? "Go to dashboard" : "Create account"}</Link>
+            <Button
+              asChild
+              size="lg"
+              className="mt-8 h-12 rounded-full bg-white text-khanakart-primary hover:bg-white/90 px-8 text-base font-semibold"
+            >
+              <Link to={primaryCta.to}>
+                {user ? "Go to dashboard" : "Get KhanaKart"}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </Button>
-            {!user && (
-              <Button asChild size="lg" variant="outline" className="rounded-full">
-                <Link to="/login">Log in</Link>
-              </Button>
-            )}
           </div>
         </div>
       </section>
 
-      <footer className="border-t border-khanakart-dark/10">
-        <div className="container py-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-khanakart-dark/50">
-          <p>KhanaKart · Group ordering for any outlet on campus</p>
-          <p>Hostels · clubs · labs · one combined cart</p>
+      <footer className="border-t border-white/10">
+        <div className="container py-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-white/40">
+          <p>KhanaKart</p>
+          <p>Campus group orders · any outlet</p>
         </div>
       </footer>
     </div>
@@ -173,16 +211,19 @@ const Index = () => {
 };
 
 const HeroPreview = () => (
-  <div className="relative">
-    <div className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-khanakart-primary/20 to-khanakart-neutral/20 blur-2xl" />
-    <div className="relative rounded-3xl border border-khanakart-dark/10 bg-white shadow-xl overflow-hidden">
+  <div className="relative lg:pl-6">
+    <div className="absolute -top-6 -left-2 z-10 rounded-2xl border border-white/10 bg-khanakart-dark/90 px-4 py-3 shadow-xl backdrop-blur">
+      <p className="text-[11px] uppercase tracking-wider text-white/50">Group chat</p>
+      <p className="text-sm text-white/40 line-through">wait what did rohit want</p>
+    </div>
+    <div className="animate-float relative rounded-3xl border border-white/10 bg-white text-khanakart-dark shadow-2xl overflow-hidden mt-8 ml-6">
       <div className="flex items-center justify-between px-5 py-4 border-b border-khanakart-dark/10 bg-[#F7F4EE]">
         <div>
-          <p className="text-xs uppercase tracking-wide text-khanakart-neutral">Campus · live session</p>
+          <p className="text-xs uppercase tracking-wide text-khanakart-neutral">Live session</p>
           <p className="font-semibold">Night canteen · Hostel 4</p>
         </div>
         <span className="rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium px-2.5 py-1">
-          Open until 1:30 PM
+          Filling up
         </span>
       </div>
       <div className="p-5 space-y-3">
@@ -191,7 +232,10 @@ const HeroPreview = () => (
           { name: "Ananya", items: "Pasta, garlic bread", total: "₹220" },
           { name: "Rohit", items: "Maggi, masala chai", total: "₹70" },
         ].map((row) => (
-          <div key={row.name} className="flex items-center justify-between rounded-xl border border-khanakart-dark/10 bg-[#F7F4EE]/80 px-4 py-3">
+          <div
+            key={row.name}
+            className="flex items-center justify-between rounded-xl border border-khanakart-dark/10 bg-[#F7F4EE]/80 px-4 py-3"
+          >
             <div>
               <p className="font-medium">{row.name}</p>
               <p className="text-sm text-khanakart-dark/60">{row.items}</p>
@@ -201,7 +245,7 @@ const HeroPreview = () => (
         ))}
       </div>
       <div className="px-5 py-4 border-t border-khanakart-dark/10 flex items-center justify-between bg-white">
-        <p className="text-sm text-khanakart-dark/60">3 people ordered</p>
+        <p className="text-sm text-khanakart-dark/60">Ready to place</p>
         <p className="font-display text-xl">₹470 combined</p>
       </div>
     </div>

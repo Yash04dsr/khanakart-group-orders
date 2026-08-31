@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
-import { ShoppingBag, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -9,6 +9,7 @@ const AppHeader = () => {
   const location = useLocation();
   const onLanding = location.pathname === "/";
   const onLogin = location.pathname === "/login";
+  const marketingChrome = onLanding || onLogin;
 
   const getUserInitials = () => {
     if (!user?.name) return "U";
@@ -23,75 +24,50 @@ const AppHeader = () => {
   return (
     <header
       className={`sticky top-0 z-50 w-full border-b backdrop-blur ${
-        onLanding
-          ? "bg-khanakart-dark/80 border-white/10"
-          : !user
-            ? "bg-[#F7F4EE]/90 border-khanakart-dark/10"
-            : "bg-background/95"
+        marketingChrome ? "bg-white/90 border-neutral-200" : "bg-background/95"
       }`}
     >
       <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ShoppingBag className={`h-6 w-6 ${onLanding ? "text-khanakart-primary" : "text-khanakart-primary"}`} />
-          <Link
-            to="/"
-            className={`font-display font-semibold text-xl ${onLanding ? "text-white" : "text-khanakart-primary"}`}
-          >
-            KhanaKart
-          </Link>
-        </div>
+        <Link to="/" className="font-semibold tracking-tight text-lg">
+          KhanaKart
+        </Link>
 
         <div className="flex items-center gap-3">
           {user ? (
             <>
               {onLanding && (
-                <Button asChild className="bg-khanakart-primary hover:bg-khanakart-primary/90 rounded-full">
+                <Button asChild className="bg-neutral-900 hover:bg-neutral-800 rounded-md">
                   <Link to={user.role === "admin" ? "/admin" : "/member"}>Dashboard</Link>
                 </Button>
               )}
               <div className="flex items-center gap-2">
-                <Avatar className="h-8 w-8 bg-khanakart-primary text-white">
+                <Avatar className="h-8 w-8 bg-neutral-900 text-white">
                   <AvatarFallback>{getUserInitials()}</AvatarFallback>
                 </Avatar>
-                <span className={`text-sm hidden sm:inline ${onLanding ? "text-white/80" : ""}`}>
+                <span className="text-sm hidden sm:inline">
                   {user.name}{" "}
-                  {user.role === "admin" && (
-                    <span className="text-khanakart-primary">(Admin)</span>
-                  )}
+                  {user.role === "admin" && <span className="text-neutral-500">(Admin)</span>}
                 </span>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={logout}
-                aria-label="Logout"
-                className={onLanding ? "text-white hover:bg-white/10 hover:text-white" : ""}
-              >
+              <Button variant="ghost" size="icon" onClick={logout} aria-label="Logout">
                 <LogOut className="h-5 w-5" />
               </Button>
             </>
           ) : (
             <>
               {onLanding && (
-                <nav className="hidden sm:flex items-center gap-6 text-sm text-white/70 mr-2">
-                  <a href="#pitch" className="hover:text-white">
-                    The pitch
-                  </a>
-                  <a href="#how-it-works" className="hover:text-white">
-                    How it works
+                <nav className="hidden sm:flex items-center gap-6 text-sm text-neutral-600 mr-2">
+                  <a href="#product" className="hover:text-neutral-900">
+                    Product
                   </a>
                 </nav>
               )}
               {!onLogin && (
-                <Button
-                  asChild
-                  variant="ghost"
-                  className={`hidden sm:inline-flex ${onLanding ? "text-white hover:bg-white/10 hover:text-white" : ""}`}
-                >
+                <Button asChild variant="ghost" className="hidden sm:inline-flex">
                   <Link to="/login">Log in</Link>
                 </Button>
               )}
-              <Button asChild className="bg-khanakart-primary hover:bg-khanakart-primary/90 rounded-full">
+              <Button asChild className="bg-neutral-900 hover:bg-neutral-800 rounded-md">
                 <Link to="/login?signup=1">Get started</Link>
               </Button>
             </>

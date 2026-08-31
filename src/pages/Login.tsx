@@ -94,26 +94,21 @@ const Login = () => {
     <div className="min-h-[calc(100vh-4rem)] grid lg:grid-cols-2 bg-[#F7F4EE]">
       <div className="hidden lg:flex flex-col justify-between p-12 bg-khanakart-dark text-white">
         <div>
-          <p className="text-sm uppercase tracking-wider text-khanakart-accent">Any outlet on campus</p>
-          <h1 className="mt-6 font-display text-5xl leading-tight">
-            Collect the group order. Then place it.
+          <p className="text-sm text-white/50">KhanaKart</p>
+          <h1 className="mt-6 text-4xl font-semibold tracking-tight leading-tight">
+            Group ordering for campus outlets
           </h1>
-          <p className="mt-4 text-lg text-white/70 max-w-md">
-            Open a session for whatever canteen, cafe, or night shop you are using. Everyone adds their items. You place one combined order — no chasing people on chat.
+          <p className="mt-4 text-lg text-white/70 max-w-md leading-relaxed">
+            Open a session, let everyone add their items, and place one order at the outlet.
           </p>
         </div>
-        <ul className="space-y-3 text-white/80">
-          <li>Works for any campus outlet, not one kitchen</li>
-          <li>Each person adds their own plate</li>
-          <li>One list, one order, a real cutoff</li>
-        </ul>
       </div>
 
       <div className="flex items-center justify-center p-4 sm:p-8">
       <div className="w-full max-w-md">
         <div className="mb-8 lg:hidden">
           <h1 className="font-display text-3xl text-khanakart-dark">Welcome to KhanaKart</h1>
-          <p className="text-muted-foreground mt-2">Group orders for any outlet on campus</p>
+          <p className="text-muted-foreground mt-2">Group ordering for campus outlets</p>
         </div>
         
         <Card className="border-khanakart-dark/10 shadow-sm">

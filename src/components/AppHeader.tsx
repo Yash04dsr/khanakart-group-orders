@@ -23,7 +23,7 @@ const AppHeader = () => {
   return (
     <header
       className={`sticky top-0 z-50 w-full border-b backdrop-blur ${
-        !user
+        onLanding || !user
           ? "bg-[#F7F4EE]/90 border-khanakart-dark/10"
           : "bg-background/95"
       }`}
@@ -39,11 +39,16 @@ const AppHeader = () => {
         <div className="flex items-center gap-3">
           {user ? (
             <>
+              {onLanding && (
+                <Button asChild className="bg-khanakart-primary hover:bg-khanakart-primary/90 rounded-full">
+                  <Link to={user.role === "admin" ? "/admin" : "/member"}>Dashboard</Link>
+                </Button>
+              )}
               <div className="flex items-center gap-2">
                 <Avatar className="h-8 w-8 bg-khanakart-primary text-white">
                   <AvatarFallback>{getUserInitials()}</AvatarFallback>
                 </Avatar>
-                <span className="text-sm">
+                <span className="text-sm hidden sm:inline">
                   {user.name}{" "}
                   {user.role === "admin" && (
                     <span className="text-khanakart-primary">(Admin)</span>

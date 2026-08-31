@@ -57,37 +57,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    let cancelled = false;
+    const failSafe = window.setTimeout(() => {
+      if (!cancelled) setIsLoading(false);
+    }, 2000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (_event, session) => {
+        if (cancelled) return;
         if (session?.user) {
-          const mappedUser = mapSupabaseUser(session.user);
-          setUser(mappedUser);
+          setUser(mapSupabaseUser(session.user));
         } else {
           setUser(null);
         }
       }
     );
 
-    // THEN check for existing session
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        
+        if (cancelled) return;
         if (session?.user) {
-          const mappedUser = mapSupabaseUser(session.user);
-          setUser(mappedUser);
+          setUser(mapSupabaseUser(session.user));
         }
       } catch (error) {
         console.error('Error loading auth session:', error);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
 
     initializeAuth();
 
     return () => {
+      cancelled = true;
+      window.clearTimeout(failSafe);
       subscription.unsubscribe();
     };
   }, []);

@@ -44,11 +44,11 @@ const ItemCard = ({ item, quantity, onUpdateQuantity }: ItemCardProps) => {
   };
   
   return (
-    <Card className={quantity > 0 ? "border-khanakart-primary border-2" : ""}>
+    <Card className={quantity > 0 ? "border-crowdplate-primary border-2" : ""}>
       <CardContent className="pt-6">
         <div className="space-y-2">
           <h3 className="font-medium">{item.name}</h3>
-          <p className="text-khanakart-primary font-semibold">₹{item.price}</p>
+          <p className="text-crowdplate-primary font-semibold">₹{item.price}</p>
         </div>
       </CardContent>
       <CardFooter className="flex justify-between">

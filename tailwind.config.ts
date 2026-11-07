@@ -1,5 +1,6 @@
 
 import type { Config } from "tailwindcss";
+import animate from "tailwindcss-animate";
 
 export default {
 	darkMode: ["class"],
@@ -67,12 +68,12 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				khanakart: {
-					primary: "#E63946",
-					secondary: "#F1FAEE",
-					accent: "#A8DADC",
-					neutral: "#457B9D",
-					dark: "#1D3557",
+				crowdplate: {
+					primary: "#F05A28",
+					secondary: "#FFF7ED",
+					accent: "#FDBA74",
+					neutral: "#737373",
+					dark: "#171717",
 				}
 			},
 			borderRadius: {
@@ -119,5 +120,5 @@ export default {
 			}
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [animate],
 } satisfies Config;

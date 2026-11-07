@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, ChevronRight } from "lucide-react";
-import { getOrderSessions } from "@/services/orderService";
+import { getOrderSessionsForUser } from "@/services/orderService";
 import { OrderSession } from "@/types";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
@@ -18,7 +18,8 @@ const MemberDashboard = () => {
   // Using React Query to fetch order sessions
   const { data: orderSessions, isLoading, refetch } = useQuery({
     queryKey: ['orderSessions'],
-    queryFn: getOrderSessions,
+    queryFn: () => user ? getOrderSessionsForUser(user.id) : Promise.resolve([]),
+    enabled: Boolean(user),
     select: (sessions) => {
       // Show active sessions first
       return [...sessions].sort((a, b) => {
@@ -76,11 +77,12 @@ const MemberDashboard = () => {
   };
 
   return (
-    <div className="container py-8">
+    <div className="container max-w-5xl py-10">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Hi {user?.name || "there"}! 👋</h1>
+        <p className="text-sm font-medium text-crowdplate-primary">CrowdPlate</p>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight">Your group orders</h1>
         <p className="text-muted-foreground mt-2">
-          Select an order session to place your food order
+          Add your items to an open session before its cutoff.
         </p>
       </div>
       
@@ -89,16 +91,21 @@ const MemberDashboard = () => {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       ) : !orderSessions || orderSessions.length === 0 ? (
-        <Card>
+        <Card className="rounded-2xl border-dashed shadow-none">
           <CardContent className="text-center py-12 text-muted-foreground">
-            <p>No order sessions available at the moment.</p>
-            <p>Please check back later.</p>
+            <p>No group-order sessions are open right now.</p>
+            <p>When an organizer starts one, it will appear here.</p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-6">
           {orderSessions.map((session) => (
-            <Card key={session.id} className={!session.isActive ? "opacity-70" : undefined}>
+            <Card
+              key={session.id}
+              className={`rounded-2xl border-neutral-200 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                !session.isActive ? "opacity-70" : ""
+              }`}
+            >
               <CardHeader className="flex flex-row items-start justify-between">
                 <div>
                   <CardTitle>{session.title}</CardTitle>
@@ -109,13 +116,13 @@ const MemberDashboard = () => {
                     </div>
                     <div className="mt-1 flex items-center">
                       <Clock className="h-4 w-4 mr-1" />
-                      <span>Deadline: {formatDate(session.deadline)}</span>
+                      <span>Cutoff: {formatDate(session.deadline)}</span>
                     </div>
                   </CardDescription>
                 </div>
                 <div>
                   {session.isActive ? (
-                    <Badge className="bg-green-500 mb-2">Active</Badge>
+                    <Badge className="bg-green-500 mb-2">Collecting</Badge>
                   ) : (
                     <Badge variant="outline">Closed</Badge>
                   )}
@@ -125,7 +132,7 @@ const MemberDashboard = () => {
                 <div>
                   {hasUserPlacedOrder(session) && (
                     <Badge variant="secondary" className="mr-2">
-                      You've placed an order
+                      Your items are in
                     </Badge>
                   )}
                 </div>
@@ -135,8 +142,8 @@ const MemberDashboard = () => {
                 >
                   <Link to={`/member/order/${session.id}`}>
                     {session.isActive ? 
-                      (hasUserPlacedOrder(session) ? "Update Order" : "Place Order") 
-                      : "View Order"}
+                      (hasUserPlacedOrder(session) ? "Update items" : "Add items")
+                      : "View items"}
                     <ChevronRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>

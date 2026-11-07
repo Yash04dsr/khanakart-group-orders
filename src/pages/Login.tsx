@@ -91,12 +91,13 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] grid lg:grid-cols-2 bg-[#F7F4EE]">
-      <div className="hidden lg:flex flex-col justify-between p-12 bg-khanakart-dark text-white">
+    <div className="grid min-h-[calc(100vh-4rem)] bg-[#fffaf6] lg:grid-cols-2">
+      <div className="relative hidden overflow-hidden bg-crowdplate-dark p-12 text-white lg:flex lg:flex-col lg:justify-between">
+        <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-crowdplate-primary/25 blur-3xl" />
         <div>
-          <p className="text-sm text-white/50">KhanaKart</p>
-          <h1 className="mt-6 text-4xl font-semibold tracking-tight leading-tight">
-            Group ordering for campus outlets
+          <p className="text-sm text-white/50">CrowdPlate</p>
+          <h1 className="mt-6 max-w-lg text-5xl font-semibold leading-[1.05] tracking-tight">
+            Everyone adds their plate. You place one order.
           </h1>
           <p className="mt-4 text-lg text-white/70 max-w-md leading-relaxed">
             Open a session, let everyone add their items, and place one order at the outlet.
@@ -107,11 +108,11 @@ const Login = () => {
       <div className="flex items-center justify-center p-4 sm:p-8">
       <div className="w-full max-w-md">
         <div className="mb-8 lg:hidden">
-          <h1 className="font-display text-3xl text-khanakart-dark">Welcome to KhanaKart</h1>
+          <h1 className="font-display text-3xl text-crowdplate-dark">Welcome to CrowdPlate</h1>
           <p className="text-muted-foreground mt-2">Group ordering for campus outlets</p>
         </div>
         
-        <Card className="border-khanakart-dark/10 shadow-sm">
+        <Card className="rounded-2xl border-crowdplate-dark/10 shadow-[0_20px_60px_-35px_rgba(0,0,0,0.35)]">
           <CardHeader>
             <CardTitle>{isSignUp ? "Create Account" : "Login"}</CardTitle>
             <CardDescription>
@@ -164,7 +165,7 @@ const Login = () => {
             <CardFooter className="flex flex-col space-y-4">
               <Button 
                 type="submit" 
-                className="w-full bg-khanakart-primary hover:bg-khanakart-primary/90"
+                className="w-full bg-crowdplate-primary hover:bg-crowdplate-primary/90"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -183,7 +184,7 @@ const Login = () => {
                     Already have an account?{" "}
                     <button 
                       type="button"
-                      className="text-khanakart-primary hover:underline" 
+                      className="text-crowdplate-primary hover:underline"
                       onClick={() => setIsSignUp(false)}
                     >
                       Log in
@@ -194,7 +195,7 @@ const Login = () => {
                     Don't have an account?{" "}
                     <button 
                       type="button"
-                      className="text-khanakart-primary hover:underline" 
+                      className="text-crowdplate-primary hover:underline"
                       onClick={() => setIsSignUp(true)}
                     >
                       Sign up

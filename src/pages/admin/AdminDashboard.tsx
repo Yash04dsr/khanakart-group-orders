@@ -61,20 +61,24 @@ const AdminDashboard = () => {
   }, [refetch]);
 
   return (
-    <div className="container py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <Button asChild>
+    <div className="container max-w-6xl py-10">
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-crowdplate-primary">Organizer workspace</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight">Group orders</h1>
+          <p className="mt-2 text-muted-foreground">Start a session, collect everyone’s items, and place one order.</p>
+        </div>
+        <Button asChild className="rounded-lg shadow-sm">
           <Link to="/admin/create-order">
             <PlusCircle className="mr-2 h-4 w-4" />
-            Create Order Session
+            Start a session
           </Link>
         </Button>
       </div>
       
-      <Card className="mb-8">
+      <Card className="mb-8 overflow-hidden rounded-2xl border-neutral-200 shadow-sm">
         <CardHeader>
-          <CardTitle>Order Sessions</CardTitle>
+          <CardTitle>Sessions you organize</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -82,15 +86,15 @@ const AdminDashboard = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : !orderSessions || orderSessions.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No order sessions found. Create your first order session.
+            <div className="rounded-xl border border-dashed py-14 text-center text-muted-foreground">
+              No sessions yet. Start one for any outlet your group uses.
             </div>
           ) : (
             <Table>
-              <TableCaption>A list of all order sessions.</TableCaption>
+              <TableCaption>Your active and past group-order sessions.</TableCaption>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Title</TableHead>
+                  <TableHead>Outlet and order</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Deadline</TableHead>
                   <TableHead>Status</TableHead>
@@ -100,7 +104,7 @@ const AdminDashboard = () => {
               </TableHeader>
               <TableBody>
                 {orderSessions.map((session) => (
-                  <TableRow key={session.id}>
+                  <TableRow key={session.id} className="hover:bg-orange-50/40">
                     <TableCell className="font-medium">
                       {session.title}
                     </TableCell>

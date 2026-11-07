@@ -11,6 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
 const CreateOrderSession = () => {
+  const [outlet, setOutlet] = useState("");
   const [title, setTitle] = useState("");
   const [deadline, setDeadline] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,7 +23,7 @@ const CreateOrderSession = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title.trim() || !deadline) {
+    if (!outlet.trim() || !deadline) {
       toast({
         title: "Missing information",
         description: "Please fill all required fields",
@@ -51,20 +52,23 @@ const CreateOrderSession = () => {
         throw new Error("You must be logged in to create an order session");
       }
       
-      // Verify admin privileges
+      // Verify organizer privileges
       if (user.role !== "admin") {
-        throw new Error("Only admins can create order sessions");
+        throw new Error("Only organizers can start order sessions");
       }
 
       // Format the deadline date as ISO string
       const deadlineISO = deadlineDate.toISOString();
       
       // Create the session
-      const newSession = await createOrderSession(title, deadlineISO);
+      const sessionTitle = title.trim()
+        ? `${outlet.trim()} · ${title.trim()}`
+        : outlet.trim();
+      const newSession = await createOrderSession(sessionTitle, deadlineISO);
       
       toast({
-        title: "Order session created",
-        description: "New order session has been created successfully",
+        title: "Session is live",
+        description: "People can now add their items before the cutoff.",
       });
       
       // Update Supabase realtime for other users
@@ -84,7 +88,7 @@ const CreateOrderSession = () => {
       let description = errorMessage;
       
       if (errorMessage.includes("permission denied") || errorMessage.toLowerCase().includes("permission")) {
-        description = "Database permission error. Please make sure you're properly authenticated as an admin and have the necessary permissions.";
+        description = "Database permission error. Please make sure you're signed in with organizer access.";
       }
       
       toast({
@@ -98,37 +102,56 @@ const CreateOrderSession = () => {
   };
 
   return (
-    <div className="container py-8">
+    <div className="container max-w-4xl py-10">
       <Button 
         variant="outline" 
-        className="mb-8" 
+        className="mb-8 rounded-lg"
         onClick={() => navigate('/admin')}
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back to Dashboard
       </Button>
       
-      <Card className="max-w-md mx-auto">
+      <div className="mb-8 max-w-xl">
+        <p className="text-sm font-medium text-crowdplate-primary">New session</p>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight">Where is the group ordering from?</h1>
+        <p className="mt-2 text-muted-foreground">Set the outlet and cutoff. Everyone will add their own items.</p>
+      </div>
+
+      <Card className="max-w-xl rounded-2xl border-neutral-200 shadow-sm">
         <CardHeader>
-          <CardTitle>Create Order Session</CardTitle>
+          <CardTitle className="text-xl">Session details</CardTitle>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="title" className="text-sm font-medium">Session Title</label>
+              <label htmlFor="outlet" className="text-sm font-medium">Outlet</label>
+              <Input
+                id="outlet"
+                placeholder="e.g. Hostel night canteen"
+                value={outlet}
+                onChange={(e) => setOutlet(e.target.value)}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                CrowdPlate works with any campus canteen, cafe, stall, or shop.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="title" className="text-sm font-medium">Order name <span className="text-muted-foreground">(optional)</span></label>
               <Input
                 id="title"
-                placeholder="e.g., Lunch Order - April 10th"
+                placeholder="e.g. Friday dinner"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                required
               />
             </div>
             
             <div className="space-y-2">
               <label htmlFor="deadline" className="text-sm font-medium flex items-center">
                 <Calendar className="h-4 w-4 mr-2" />
-                Order Deadline
+                Cutoff time
               </label>
               <Input
                 id="deadline"
@@ -138,7 +161,7 @@ const CreateOrderSession = () => {
                 required
               />
               <p className="text-xs text-muted-foreground">
-                Orders can be placed until this time
+                People can add or update items until this time.
               </p>
             </div>
           </CardContent>
@@ -146,16 +169,16 @@ const CreateOrderSession = () => {
           <CardFooter>
             <Button 
               type="submit" 
-              className="w-full"
+              className="w-full rounded-lg"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <span className="flex items-center">
                   <span className="h-4 w-4 mr-2 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
-                  Creating...
+                  Starting…
                 </span>
               ) : (
-                "Create Order Session"
+                "Start session"
               )}
             </Button>
           </CardFooter>

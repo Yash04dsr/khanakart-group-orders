@@ -11,14 +11,20 @@ const Index = () => {
 
   return (
     <div className="bg-white text-neutral-900">
-      <section className="border-b border-neutral-200">
+      <section className="relative overflow-hidden border-b border-neutral-200 bg-[linear-gradient(180deg,#fff_0%,#fffaf5_100%)]">
+        <div className="pointer-events-none absolute -right-32 -top-40 h-96 w-96 rounded-full bg-orange-200/40 blur-3xl" />
         <div className="container py-20 md:py-28">
-          <div className="max-w-3xl">
+          <div className="relative max-w-3xl">
+            <p className="mb-5 inline-flex rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">
+              Built for campus groups
+            </p>
             <h1 className="text-5xl sm:text-6xl lg:text-[4.5rem] font-semibold tracking-tight leading-[1.05]">
-              Group ordering for campus outlets
+              Everyone picks.
+              <br />
+              <span className="text-crowdplate-primary">One person orders.</span>
             </h1>
             <p className="mt-6 text-lg sm:text-xl text-neutral-600 max-w-2xl leading-relaxed">
-              When a group eats together, someone still has to collect every item and place the order. KhanaKart is that layer: one session, everyone’s items, one list to take to any outlet on campus.
+              When a group eats together, someone still has to collect every item and place the order. CrowdPlate is that layer: one session, everyone’s items, one list to take to any outlet on campus.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg" className="h-11 rounded-md bg-neutral-900 hover:bg-neutral-800 text-white px-5">
@@ -30,23 +36,23 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="mt-16 rounded-xl border border-neutral-200 bg-neutral-50 p-2 sm:p-4 shadow-sm">
+          <div className="relative mt-16 rounded-2xl border border-neutral-200/80 bg-white/70 p-2 shadow-[0_24px_70px_-30px_rgba(0,0,0,0.25)] backdrop-blur sm:p-4">
             <ProductFrame />
           </div>
         </div>
       </section>
 
       <section className="border-b border-neutral-200">
-        <div className="container py-20 md:py-24 grid md:grid-cols-2 gap-12 md:gap-20">
-          <div>
+        <div className="container grid gap-6 py-20 md:grid-cols-2 md:py-24">
+          <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-8 md:p-10">
             <p className="text-sm font-medium text-neutral-500">Problem</p>
             <h2 className="mt-2 text-3xl font-semibold tracking-tight">The order is scattered before it is placed</h2>
             <p className="mt-4 text-neutral-600 leading-relaxed">
               Campus groups already know the outlet. What takes time is gathering who wants what — across messages, last-minute changes, and a list that only exists in one person’s head at the counter.
             </p>
           </div>
-          <div>
-            <p className="text-sm font-medium text-neutral-500">Product</p>
+          <div className="rounded-2xl border border-orange-200 bg-orange-50/60 p-8 md:p-10">
+            <p className="text-sm font-medium text-crowdplate-primary">CrowdPlate</p>
             <h2 className="mt-2 text-3xl font-semibold tracking-tight">A shared session that becomes one order</h2>
             <p className="mt-4 text-neutral-600 leading-relaxed">
               Create a session for any canteen, cafe, or night outlet. Each person adds their own items before a cutoff. You receive a single named list and a total, then place that order at the outlet.
@@ -89,7 +95,7 @@ const Index = () => {
         </div>
       </section>
 
-      <section className="bg-neutral-50">
+      <section className="bg-[#fff8f3]">
         <div className="container py-20 md:py-24 flex flex-col md:flex-row md:items-center md:justify-between gap-8">
           <div className="max-w-xl">
             <h2 className="text-3xl font-semibold tracking-tight">Start a session for your next group order</h2>
@@ -97,7 +103,7 @@ const Index = () => {
               Works with any outlet on campus. Built for hostels, clubs, labs, and teams that already eat together.
             </p>
           </div>
-          <Button asChild size="lg" className="h-11 rounded-md bg-neutral-900 hover:bg-neutral-800 text-white px-5 shrink-0">
+          <Button asChild size="lg" className="h-11 shrink-0 rounded-md bg-crowdplate-primary px-5 text-white hover:bg-crowdplate-primary/90">
             <Link to={primaryCta.to}>{user ? "Go to dashboard" : "Get started"}</Link>
           </Button>
         </div>
@@ -105,7 +111,7 @@ const Index = () => {
 
       <footer className="border-t border-neutral-200">
         <div className="container py-8 flex flex-col sm:flex-row justify-between gap-2 text-sm text-neutral-500">
-          <p>KhanaKart</p>
+          <p>CrowdPlate</p>
           <p>Group ordering for campus outlets</p>
         </div>
       </footer>

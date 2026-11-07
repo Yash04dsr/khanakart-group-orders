@@ -16,16 +16,16 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 0 72% 56%; /* E63946 - Khanakart primary red */
+    --primary: 16 87% 55%; /* CrowdPlate orange */
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 84 38% 96%; /* F1FAEE - Khanakart secondary */
+    --secondary: 33 100% 96%; /* CrowdPlate warm surface */
     --secondary-foreground: 222.2 47.4% 11.2%;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 188 52% 77%; /* A8DADC - Khanakart accent */
+    --accent: 30 96% 71%; /* CrowdPlate accent */
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;

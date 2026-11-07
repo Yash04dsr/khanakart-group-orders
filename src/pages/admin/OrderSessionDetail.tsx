@@ -25,11 +25,11 @@ import {
 } from "@/services/orderService";
 import { ArrowLeft, UserCircle, ClipboardList, AlertTriangle, CheckCircle, Ban, Clipboard, FileText } from "lucide-react";
 import { format } from "date-fns";
-import { MENU_ITEMS } from "@/services/mockData";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
+import { getItemDisplayName } from "@/lib/orderItems";
 
 const OrderSessionDetail = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -132,11 +132,6 @@ const OrderSessionDetail = () => {
     }
   };
 
-  // Get item details by ID
-  const getItemById = (itemId: string) => {
-    return MENU_ITEMS.find(item => item.id === itemId);
-  };
-
   // Calculate total price for an order
   const calculateOrderTotal = (items: {menuItemId: string; quantity: number; price: number}[]) => {
     return items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
@@ -158,10 +153,13 @@ const OrderSessionDetail = () => {
       return;
     }
     
-    // Format the order as requested: ItemName - Quantity
-      const formattedOrder = compiledOrder
-        .map(item => `${item.item} - ${item.quantity}`)
-        .join('\n') + '\n';
+    const formattedOrder = [
+      orderSession?.title ?? "Group order",
+      ...compiledOrder.map(
+        (item) => `${item.item} × ${item.quantity} — ₹${(item.quantity * item.price).toFixed(2)}`,
+      ),
+      `Total — ₹${calculateGrandTotal().toFixed(2)}`,
+    ].join("\n");
     
     // Copy to clipboard
     navigator.clipboard.writeText(formattedOrder)
@@ -193,17 +191,15 @@ const OrderSessionDetail = () => {
     }
     
     // CSV Headers
-    const headers = ["Item", "Category", "Unit Price", "Quantity", "Total"];
+    const headers = ["Item", "Unit Price", "Quantity", "Total"];
     
     // CSV Rows
     const rows = compiledOrder.map(item => {
-      const menuItem = MENU_ITEMS.find(mi => mi.name === item.item);
       const itemPrice = parseFloat(item.price.toString());
       const itemQuantity = parseFloat(item.quantity.toString());
       
       return [
         item.item,
-        menuItem?.category.replace('_', ' ') || 'Unknown',
         itemPrice.toFixed(2),
         itemQuantity.toString(),
         (itemQuantity * itemPrice).toFixed(2)
@@ -211,7 +207,7 @@ const OrderSessionDetail = () => {
     });
     
     // Add Grand Total row
-    rows.push(['', '', '', 'Grand Total', calculateGrandTotal().toFixed(2)]);
+    rows.push(['', '', 'Grand Total', calculateGrandTotal().toFixed(2)]);
     
     // Convert to CSV format
     const csvContent = [
@@ -258,7 +254,7 @@ const OrderSessionDetail = () => {
   }
 
   return (
-    <div className="container py-8">
+    <div className="container max-w-6xl py-10">
       <Button 
         variant="outline" 
         className="mb-8" 
@@ -270,7 +266,8 @@ const OrderSessionDetail = () => {
       
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h1 className="text-3xl font-bold">{orderSession.title}</h1>
+          <p className="text-sm font-medium text-crowdplate-primary">Organizer view</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight">{orderSession.title}</h1>
           <p className="text-muted-foreground mt-1">Created: {formatDate(orderSession.createdAt)}</p>
           <p className="text-muted-foreground">Deadline: {formatDate(orderSession.deadline)}</p>
           <div className="mt-2">
@@ -319,7 +316,7 @@ const OrderSessionDetail = () => {
         </TabsList>
         
         <TabsContent value="compiled">
-          <Card>
+          <Card className="overflow-hidden rounded-2xl border-neutral-200 shadow-sm">
             <CardHeader>
               <CardTitle>
                 Compiled Order Summary
@@ -328,7 +325,7 @@ const OrderSessionDetail = () => {
             <CardContent>
               {compiledOrder.length === 0 ? (
                 <div className="text-center py-8 flex flex-col items-center text-muted-foreground">
-                  <AlertTriangle className="h-12 w-12 mb-4 text-khanakart-primary" />
+                  <AlertTriangle className="h-12 w-12 mb-4 text-crowdplate-primary" />
                   <p>No items have been ordered yet.</p>
                 </div>
               ) : (
@@ -338,7 +335,6 @@ const OrderSessionDetail = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Item</TableHead>
-                        <TableHead>Category</TableHead>
                         <TableHead className="text-right">Unit Price</TableHead>
                         <TableHead className="text-right">Quantity</TableHead>
                         <TableHead className="text-right">Total</TableHead>
@@ -346,16 +342,12 @@ const OrderSessionDetail = () => {
                     </TableHeader>
                     <TableBody>
                       {compiledOrder.map((item, index) => {
-                        const menuItem = MENU_ITEMS.find(mi => mi.name === item.item);
                         const itemPrice = parseFloat(item.price.toString());
                         const itemQuantity = parseFloat(item.quantity.toString());
                         
                         return (
                           <TableRow key={index}>
                             <TableCell className="font-medium">{item.item}</TableCell>
-                            <TableCell>
-                              {menuItem?.category.replace('_', ' ')}
-                            </TableCell>
                             <TableCell className="text-right">₹{itemPrice.toFixed(2)}</TableCell>
                             <TableCell className="text-right">{itemQuantity}</TableCell>
                             <TableCell className="text-right font-medium">
@@ -365,10 +357,10 @@ const OrderSessionDetail = () => {
                         );
                       })}
                       <TableRow>
-                        <TableCell colSpan={4} className="text-right font-medium">
+                        <TableCell colSpan={3} className="text-right font-medium">
                           Grand Total
                         </TableCell>
-                        <TableCell className="text-right font-bold text-khanakart-primary">
+                        <TableCell className="text-right font-bold text-crowdplate-primary">
                           ₹{calculateGrandTotal().toFixed(2)}
                         </TableCell>
                       </TableRow>
@@ -404,13 +396,13 @@ const OrderSessionDetail = () => {
             {!orderSession.orders || orderSession.orders.length === 0 ? (
               <Card>
                 <CardContent className="text-center py-8 flex flex-col items-center text-muted-foreground">
-                  <AlertTriangle className="h-12 w-12 mb-4 text-khanakart-primary" />
+                  <AlertTriangle className="h-12 w-12 mb-4 text-crowdplate-primary" />
                   <p>No orders have been placed yet.</p>
                 </CardContent>
               </Card>
             ) : (
               orderSession.orders.map((order) => (
-                <Card key={order.userId}>
+                <Card key={order.userId} className="rounded-2xl border-neutral-200 shadow-sm">
                   <CardHeader>
                     <CardTitle className="text-xl">
                       {order.userName}'s Order
@@ -428,14 +420,13 @@ const OrderSessionDetail = () => {
                       </TableHeader>
                       <TableBody>
                         {order.items.map((item, index) => {
-                          const menuItem = getItemById(item.menuItemId);
                           const itemQuantity = parseFloat(item.quantity.toString());
                           const itemPrice = parseFloat(item.price.toString());
                           
                           return (
                             <TableRow key={index}>
                               <TableCell>
-                                {menuItem?.name || "Unknown Item"}
+                                {getItemDisplayName(item.menuItemId)}
                               </TableCell>
                               <TableCell className="text-right">
                                 {itemQuantity}

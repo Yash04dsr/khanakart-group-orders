@@ -1,12 +1,12 @@
 
 import { OrderItem, OrderSession, UserOrder } from '../types';
-import { MENU_ITEMS } from './mockData';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types';
+import { getItemDisplayName } from '@/lib/orderItems';
+import type { Database } from '@/integrations/supabase/types';
 
 // Helper function for error handling
-const handleError = (error: any, errorMessage: string) => {
+const handleError = (error: unknown, errorMessage: string) => {
   console.error(errorMessage, error);
   toast({
     title: "Error",
@@ -41,6 +41,32 @@ export const getOrderSessions = async (): Promise<OrderSession[]> => {
   }
 };
 
+export const getOrderSessionsForUser = async (userId: string): Promise<OrderSession[]> => {
+  const [sessions, orderResult] = await Promise.all([
+    getOrderSessions(),
+    supabase
+      .from("user_orders")
+      .select("session_id, user_name")
+      .eq("user_id", userId),
+  ]);
+
+  if (orderResult.error) {
+    return sessions;
+  }
+
+  const ordersBySession = new Map(
+    (orderResult.data ?? []).map((order) => [
+      order.session_id,
+      { userId, userName: order.user_name, items: [] } satisfies UserOrder,
+    ]),
+  );
+
+  return sessions.map((session) => ({
+    ...session,
+    orders: ordersBySession.has(session.id) ? [ordersBySession.get(session.id)!] : [],
+  }));
+};
+
 // Get a specific order session with orders
 export const getOrderSession = async (sessionId: string): Promise<OrderSession | undefined> => {
   try {
@@ -64,7 +90,7 @@ export const getOrderSession = async (sessionId: string): Promise<OrderSession |
     // Get all order items for all orders in this session
     const orderIds = ordersData.map(order => order.id);
     
-    let orderItems: any[] = [];
+    let orderItems: Database["public"]["Tables"]["order_items"]["Row"][] = [];
     if (orderIds.length > 0) {
       const { data: itemsData, error: itemsError } = await supabase
         .from('order_items')
@@ -172,7 +198,7 @@ export const toggleOrderSessionStatus = async (
     // First get the current status
     const { data: current, error: fetchError } = await supabase
       .from('order_sessions')
-      .select('is_active')
+      .select('is_active, deadline')
       .eq('id', sessionId)
       .single();
 
@@ -203,7 +229,7 @@ export const toggleOrderSessionStatus = async (
     // Get all order items
     const orderIds = ordersData.map(order => order.id);
     
-    let orderItems: any[] = [];
+    let orderItems: Database["public"]["Tables"]["order_items"]["Row"][] = [];
     if (orderIds.length > 0) {
       const { data: itemsData, error: itemsError } = await supabase
         .from('order_items')
@@ -269,10 +295,10 @@ export const saveUserOrder = async (
       throw new Error("Session not found");
     }
 
-    if (!sessionData.is_active) {
+    if (!sessionData.is_active || new Date(sessionData.deadline) <= new Date()) {
       toast({
         title: "Cannot modify order",
-        description: "This order session has been finalized",
+        description: "This order session is closed or its deadline has passed",
         variant: "destructive"
       });
       return undefined;
@@ -443,9 +469,8 @@ export const getCompiledOrder = async (
 
     // Convert to array with item details
     return Object.entries(compiledItems).map(([itemId, data]) => {
-      const menuItem = MENU_ITEMS.find(item => item.id === itemId);
       return {
-        item: menuItem?.name || 'Unknown Item',
+        item: getItemDisplayName(itemId),
         quantity: data.quantity,
         price: data.price
       };

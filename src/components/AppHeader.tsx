@@ -23,13 +23,17 @@ const AppHeader = () => {
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full border-b backdrop-blur ${
-        marketingChrome ? "bg-white/90 border-neutral-200" : "bg-background/95"
+      className={`sticky top-0 z-50 w-full border-b backdrop-blur-xl ${
+        marketingChrome ? "bg-white/85 border-neutral-200/80" : "bg-white/90 border-neutral-200/80"
       }`}
     >
       <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="font-semibold tracking-tight text-lg">
-          KhanaKart
+        <Link to="/" className="flex items-center gap-2.5 font-semibold tracking-tight text-lg">
+          <span className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-neutral-900 shadow-sm">
+            <span className="absolute top-2 h-1.5 w-1.5 rounded-full bg-crowdplate-accent" />
+            <span className="absolute bottom-2 h-2.5 w-4 rounded-b-full bg-crowdplate-primary" />
+          </span>
+          <span>CrowdPlate</span>
         </Link>
 
         <div className="flex items-center gap-3">
@@ -46,7 +50,7 @@ const AppHeader = () => {
                 </Avatar>
                 <span className="text-sm hidden sm:inline">
                   {user.name}{" "}
-                  {user.role === "admin" && <span className="text-neutral-500">(Admin)</span>}
+                  {user.role === "admin" && <span className="text-neutral-500">(Organizer)</span>}
                 </span>
               </div>
               <Button variant="ghost" size="icon" onClick={logout} aria-label="Logout">
@@ -67,9 +71,11 @@ const AppHeader = () => {
                   <Link to="/login">Log in</Link>
                 </Button>
               )}
-              <Button asChild className="bg-neutral-900 hover:bg-neutral-800 rounded-md">
-                <Link to="/login?signup=1">Get started</Link>
-              </Button>
+              {!onLogin && (
+                <Button asChild className="bg-neutral-900 hover:bg-neutral-800 rounded-md">
+                  <Link to="/login?signup=1">Get started</Link>
+                </Button>
+              )}
             </>
           )}
         </div>

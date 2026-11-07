@@ -1,50 +1,32 @@
 
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { AlertTriangle, ArrowLeft, Clock, Plus, Save, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import ItemCard from "@/components/ItemCard";
-import { ArrowLeft, Clock, Save, ShoppingCart, AlertTriangle } from "lucide-react";
-import { 
-  getOrderSession,
-  getUserOrder,
-  saveUserOrder
-} from "@/services/orderService";
-import { MENU_ITEMS } from "@/services/mockData";
-import { OrderItem } from "@/types";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
-import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { createCustomItemId, getItemDisplayName } from "@/lib/orderItems";
+import { getOrderSession, getUserOrder, saveUserOrder } from "@/services/orderService";
+import { OrderItem } from "@/types";
 
-// Helper function to group menu items by category
-const groupItemsByCategory = () => {
-  return MENU_ITEMS.reduce((groups, item) => {
-    const category = item.category;
-    if (!groups[category]) {
-      groups[category] = [];
-    }
-    groups[category].push(item);
-    return groups;
-  }, {} as Record<string, typeof MENU_ITEMS>);
+type DraftItem = {
+  id: string;
+  name: string;
+  quantity: number;
+  price: number;
 };
 
-// Mapping for category display names
-const categoryDisplayNames: Record<string, string> = {
-  appetizers: "Appetizers",
-  main_course: "Main Course",
-  bread: "Bread",
-  beverages: "Beverages & Desserts"
-};
+const emptyItem = (): DraftItem => ({
+  id: crypto.randomUUID(),
+  name: "",
+  quantity: 1,
+  price: 0,
+});
 
 const MemberOrderDetail = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -52,326 +34,211 @@ const MemberOrderDetail = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [items, setItems] = useState<DraftItem[]>([emptyItem()]);
   const [initialized, setInitialized] = useState(false);
-  
-  // Group menu items by category
-  const itemsByCategory = groupItemsByCategory();
-  
-  // Fetch order session with React Query
-  const { 
-    data: orderSession,
-    isLoading: isSessionLoading
-  } = useQuery({
-    queryKey: ['orderSession', sessionId],
-    queryFn: () => sessionId ? getOrderSession(sessionId) : Promise.resolve(undefined),
-    enabled: !!sessionId && !!user,
-    meta: {
-      onError: (error) => {
-        console.error("Error fetching session:", error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch order session",
-          variant: "destructive"
-        });
-        navigate('/member');
-      }
-    }
-  });
-  
-  // Fetch user's existing order
-  const {
-    data: userOrder,
-    isLoading: isOrderLoading
-  } = useQuery({
-    queryKey: ['userOrder', sessionId, user?.id],
-    queryFn: () => {
-      if (!sessionId || !user) return Promise.resolve(undefined);
-      return getUserOrder(sessionId, user.id);
-    },
-    enabled: !!sessionId && !!user,
-  });
-  
-  // Initialize quantities state from user order
-  useEffect(() => {
-    if (userOrder && !initialized) {
-      const initialQuantities: Record<string, number> = {};
-      
-      userOrder.items.forEach((item) => {
-        initialQuantities[item.menuItemId] = item.quantity;
-      });
-      
-      setQuantities(initialQuantities);
-      setInitialized(true);
-    }
-  }, [userOrder, initialized]);
-  
-  // Set up Supabase realtime subscription
-  useEffect(() => {
-    if (!sessionId || !user) return;
-    
-    const channel = supabase
-      .channel(`member-order-detail-${sessionId}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'order_sessions', filter: `id=eq.${sessionId}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['orderSession', sessionId] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'user_orders' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['userOrder', sessionId, user.id] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'order_items' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['userOrder', sessionId, user.id] });
-        }
-      )
-      .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [sessionId, user, queryClient]);
-  
-  // Save order mutation
+  const { data: orderSession, isLoading: isSessionLoading } = useQuery({
+    queryKey: ["orderSession", sessionId],
+    queryFn: () => (sessionId ? getOrderSession(sessionId) : Promise.resolve(undefined)),
+    enabled: Boolean(sessionId && user),
+  });
+
+  const { data: userOrder, isLoading: isOrderLoading } = useQuery({
+    queryKey: ["userOrder", sessionId, user?.id],
+    queryFn: () =>
+      sessionId && user ? getUserOrder(sessionId, user.id) : Promise.resolve(undefined),
+    enabled: Boolean(sessionId && user),
+  });
+
+  useEffect(() => {
+    if (initialized || !userOrder) return;
+    setItems(
+      userOrder.items.length
+        ? userOrder.items.map((item) => ({
+            id: crypto.randomUUID(),
+            name: getItemDisplayName(item.menuItemId),
+            quantity: item.quantity,
+            price: item.price,
+          }))
+        : [emptyItem()],
+    );
+    setInitialized(true);
+  }, [initialized, userOrder]);
+
   const { mutate: saveOrder, isPending: isSaving } = useMutation({
-    mutationFn: (items: OrderItem[]) => {
-      if (!sessionId || !user || !orderSession || !orderSession.isActive) {
-        return Promise.reject("Cannot save order");
-      }
-      return saveUserOrder(sessionId, user.id, user.name, items);
+    mutationFn: (orderItems: OrderItem[]) => {
+      if (!sessionId || !user) throw new Error("Sign in to save an order");
+      return saveUserOrder(sessionId, user.id, user.name, orderItems);
     },
     onSuccess: () => {
-      toast({
-        title: "Order saved",
-        description: "Your order has been saved successfully",
-      });
-      
-      // Invalidate queries to refetch latest data
-      queryClient.invalidateQueries({ queryKey: ['userOrder', sessionId, user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['orderSession', sessionId] });
-      queryClient.invalidateQueries({ queryKey: ['orderSessions'] });
+      toast({ title: "Order saved", description: "Your items are now part of the group order." });
+      queryClient.invalidateQueries({ queryKey: ["userOrder", sessionId, user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["orderSession", sessionId] });
+      queryClient.invalidateQueries({ queryKey: ["orderSessions"] });
     },
-    onError: (error) => {
-      console.error("Save order error:", error);
+    onError: () => {
       toast({
-        title: "Failed to save order",
-        description: "An error occurred while saving your order",
+        title: "Could not save order",
+        description: "Check the session deadline and try again.",
         variant: "destructive",
       });
-    }
+    },
   });
 
-  const updateQuantity = (itemId: string, quantity: number) => {
-    setQuantities(prev => ({
-      ...prev,
-      [itemId]: quantity
-    }));
+  const updateItem = (id: string, patch: Partial<DraftItem>) => {
+    setItems((current) => current.map((item) => (item.id === id ? { ...item, ...patch } : item)));
   };
 
-  const handleSaveOrder = () => {
-    // Convert quantities to order items
-    const orderItems: OrderItem[] = Object.entries(quantities)
-      .filter(([_, quantity]) => quantity > 0)
-      .map(([itemId, quantity]) => {
-        const menuItem = MENU_ITEMS.find(item => item.id === itemId);
-        return {
-          menuItemId: itemId,
-          quantity,
-          price: menuItem?.price || 0
-        };
+  const removeItem = (id: string) => {
+    setItems((current) => {
+      const next = current.filter((item) => item.id !== id);
+      return next.length ? next : [emptyItem()];
+    });
+  };
+
+  const handleSave = () => {
+    const validItems = items.filter((item) => item.name.trim() && item.quantity > 0);
+    if (!validItems.length) {
+      toast({
+        title: "Add at least one item",
+        description: "Enter the item you want from this outlet.",
+        variant: "destructive",
       });
-    
-    // Save the order
-    saveOrder(orderItems);
-  };
-
-  // Calculate total order amount
-  const calculateTotal = () => {
-    return Object.entries(quantities).reduce((total, [itemId, quantity]) => {
-      if (quantity <= 0) return total;
-      const menuItem = MENU_ITEMS.find(item => item.id === itemId);
-      return total + (menuItem?.price || 0) * quantity;
-    }, 0);
-  };
-
-  // Count items in cart
-  const itemCount = Object.values(quantities).filter(q => q > 0).length;
-
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), 'MMMM dd, yyyy - h:mm a');
-    } catch (e) {
-      return dateString;
+      return;
     }
+
+    saveOrder(
+      validItems.map((item) => ({
+        menuItemId: createCustomItemId(item.name),
+        quantity: item.quantity,
+        price: item.price,
+      })),
+    );
   };
 
-  const isLoading = isSessionLoading || isOrderLoading;
-
-  if (isLoading) {
+  if (isSessionLoading || isOrderLoading) {
     return (
-      <div className="container py-8 flex justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="container py-16 flex justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-primary" />
       </div>
     );
   }
 
   if (!orderSession) {
     return (
-      <div className="container py-8">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Order session not found</h2>
-          <Button onClick={() => navigate('/member')}>Back to Dashboard</Button>
-        </div>
+      <div className="container py-16 text-center">
+        <h2 className="text-2xl font-semibold">Order session not found</h2>
+        <Button className="mt-4" onClick={() => navigate("/member")}>Back to dashboard</Button>
       </div>
     );
   }
 
+  const isOpen = orderSession.isActive && new Date(orderSession.deadline) > new Date();
+  const total = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+
   return (
-    <div className="container py-8">
-      <Button 
-        variant="outline" 
-        className="mb-8" 
-        onClick={() => navigate('/member')}
-      >
+    <div className="container max-w-5xl py-10">
+      <Button variant="ghost" className="mb-6" onClick={() => navigate("/member")}>
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Dashboard
+        Back to dashboard
       </Button>
-      
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">{orderSession.title}</h1>
-        <div className="flex items-center mt-2">
-          <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-          <p className="text-muted-foreground">
-            Deadline: {formatDate(orderSession.deadline)}
+
+      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm font-medium text-crowdplate-primary">Add your items</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight">{orderSession.title}</h1>
+          <p className="mt-2 flex items-center text-muted-foreground">
+            <Clock className="mr-2 h-4 w-4" />
+            Add items by {format(new Date(orderSession.deadline), "MMM d, h:mm a")}
           </p>
         </div>
-        <div className="mt-2">
-          {orderSession.isActive ? (
-            <Badge className="bg-green-500">Active</Badge>
-          ) : (
-            <Badge variant="outline">Closed</Badge>
-          )}
-        </div>
+        <Badge variant={isOpen ? "default" : "outline"}>{isOpen ? "Collecting orders" : "Closed"}</Badge>
       </div>
-      
-      {!orderSession.isActive && (
-        <Card className="mb-8 border-amber-500">
-          <CardContent className="flex items-center p-4">
-            <AlertTriangle className="h-5 w-5 text-amber-500 mr-2" />
-            <p>This order session has been finalized and cannot be modified.</p>
-          </CardContent>
-        </Card>
+
+      {!isOpen && (
+        <div className="mb-6 flex items-center rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <AlertTriangle className="mr-2 h-4 w-4" />
+          The cutoff has passed. This order can no longer be changed.
+        </div>
       )}
-      
-      <div className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <Tabs defaultValue="appetizers" className="w-full">
-            <TabsList className="mb-6 w-full justify-start overflow-x-auto">
-              {Object.keys(itemsByCategory).map(category => (
-                <TabsTrigger key={category} value={category}>
-                  {categoryDisplayNames[category]}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            
-            {Object.entries(itemsByCategory).map(([category, items]) => (
-              <TabsContent key={category} value={category} className="mt-0">
-                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {items.map(item => (
-                    <ItemCard
-                      key={item.id}
-                      item={item}
-                      quantity={quantities[item.id] || 0}
-                      onUpdateQuantity={updateQuantity}
-                    />
-                  ))}
-                </div>
-              </TabsContent>
-            ))}
-          </Tabs>
-        </div>
-        
-        <div>
-          <Card className="sticky top-24">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <ShoppingCart className="h-5 w-5 mr-2" />
-                Your Order
-              </CardTitle>
-            </CardHeader>
-            
-            <CardContent>
-              {itemCount === 0 ? (
-                <div className="text-center py-6 text-muted-foreground">
-                  <p>Your cart is empty</p>
-                  <p className="text-sm mt-2">Add items to place your order</p>
-                </div>
-              ) : (
-                <div>
-                  {Object.entries(quantities)
-                    .filter(([_, quantity]) => quantity > 0)
-                    .map(([itemId, quantity]) => {
-                      const item = MENU_ITEMS.find(i => i.id === itemId);
-                      if (!item) return null;
-                      
-                      return (
-                        <div key={itemId} className="flex justify-between py-2">
-                          <div>
-                            <p>{item.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {quantity} × ₹{item.price}
-                            </p>
-                          </div>
-                          <p className="font-medium">
-                            ₹{(quantity * item.price).toFixed(2)}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  
-                  <Separator className="my-4" />
-                  
-                  <div className="flex justify-between py-2">
-                    <p className="font-semibold">Total</p>
-                    <p className="font-bold text-lg text-khanakart-primary">
-                      ₹{calculateTotal().toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-            
-            <CardFooter>
-              <Button 
-                className="w-full"
-                disabled={!orderSession.isActive || isSaving}
-                onClick={handleSaveOrder}
+
+      <Card className="max-w-3xl rounded-2xl border-neutral-200 shadow-sm">
+        <CardHeader>
+          <CardTitle>Your plate</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Add exactly what you want from the outlet. Price is optional if you do not know it yet.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {items.map((item, index) => (
+            <div key={item.id} className="grid gap-3 rounded-xl border border-neutral-200 bg-neutral-50/60 p-4 sm:grid-cols-[1fr_100px_130px_40px]">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground" htmlFor={`name-${item.id}`}>Item</label>
+                <Input
+                  id={`name-${item.id}`}
+                  className="mt-1"
+                  placeholder={index === 0 ? "e.g. Veg burger" : "Another item"}
+                  value={item.name}
+                  disabled={!isOpen}
+                  onChange={(event) => updateItem(item.id, { name: event.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground" htmlFor={`quantity-${item.id}`}>Qty</label>
+                <Input
+                  id={`quantity-${item.id}`}
+                  className="mt-1"
+                  type="number"
+                  min="0.5"
+                  step="0.5"
+                  value={item.quantity}
+                  disabled={!isOpen}
+                  onChange={(event) => updateItem(item.id, { quantity: Number(event.target.value) })}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground" htmlFor={`price-${item.id}`}>Price each</label>
+                <Input
+                  id={`price-${item.id}`}
+                  className="mt-1"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={item.price}
+                  disabled={!isOpen}
+                  onChange={(event) => updateItem(item.id, { price: Number(event.target.value) })}
+                />
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="self-end"
+                disabled={!isOpen}
+                onClick={() => removeItem(item.id)}
+                aria-label="Remove item"
               >
-                {isSaving ? (
-                  <span className="flex items-center">
-                    <span className="h-4 w-4 mr-2 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
-                    Saving...
-                  </span>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Order
-                  </>
-                )}
+                <Trash2 className="h-4 w-4" />
               </Button>
-            </CardFooter>
-          </Card>
-        </div>
-      </div>
+            </div>
+          ))}
+
+          <Button type="button" variant="outline" disabled={!isOpen} onClick={() => setItems((current) => [...current, emptyItem()])}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add another item
+          </Button>
+        </CardContent>
+        <CardFooter className="flex items-center justify-between border-t pt-6">
+          <div>
+            <p className="text-xs text-muted-foreground">Estimated total</p>
+            <p className="text-xl font-semibold">₹{total.toFixed(2)}</p>
+          </div>
+          <Button className="rounded-lg" disabled={!isOpen || isSaving} onClick={handleSave}>
+            <Save className="mr-2 h-4 w-4" />
+            {isSaving ? "Saving…" : "Save my order"}
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 };

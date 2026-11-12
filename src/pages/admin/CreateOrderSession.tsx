@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Calendar } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { BRAND } from "@/lib/brand";
 
 const CreateOrderSession = () => {
   const [outlet, setOutlet] = useState("");
@@ -134,7 +135,7 @@ const CreateOrderSession = () => {
                 required
               />
               <p className="text-xs text-muted-foreground">
-                CrowdPlate works with any campus canteen, cafe, stall, or shop.
+                {BRAND.name} works with any campus canteen, cafe, stall, or shop.
               </p>
             </div>
 

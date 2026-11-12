@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { BRAND } from "@/lib/brand";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -95,7 +96,7 @@ const Login = () => {
       <div className="relative hidden overflow-hidden bg-crowdplate-dark p-12 text-white lg:flex lg:flex-col lg:justify-between">
         <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-crowdplate-primary/25 blur-3xl" />
         <div>
-          <p className="text-sm text-white/50">CrowdPlate</p>
+          <p className="text-sm text-white/50">{BRAND.name}</p>
           <h1 className="mt-6 max-w-lg text-5xl font-semibold leading-[1.05] tracking-tight">
             Everyone adds their plate. You place one order.
           </h1>
@@ -108,7 +109,7 @@ const Login = () => {
       <div className="flex items-center justify-center p-4 sm:p-8">
       <div className="w-full max-w-md">
         <div className="mb-8 lg:hidden">
-          <h1 className="font-display text-3xl text-crowdplate-dark">Welcome to CrowdPlate</h1>
+          <h1 className="font-display text-3xl text-crowdplate-dark">Welcome to {BRAND.name}</h1>
           <p className="text-muted-foreground mt-2">Group ordering for campus outlets</p>
         </div>
         

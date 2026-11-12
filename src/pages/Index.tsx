@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
+import { BRAND } from "@/lib/brand";
 
 const Index = () => {
   const { user } = useAuth();
@@ -11,11 +12,11 @@ const Index = () => {
 
   return (
     <div className="bg-white text-neutral-900">
-      <section className="relative overflow-hidden border-b border-neutral-200 bg-[linear-gradient(180deg,#fff_0%,#fffaf5_100%)]">
-        <div className="pointer-events-none absolute -right-32 -top-40 h-96 w-96 rounded-full bg-orange-200/40 blur-3xl" />
+      <section className="relative overflow-hidden border-b border-neutral-200 bg-gradient-to-b from-white to-crowdplate-secondary/50">
+        <div className="pointer-events-none absolute -right-32 -top-40 h-96 w-96 rounded-full bg-crowdplate-accent/30 blur-3xl" />
         <div className="container py-20 md:py-28">
           <div className="relative max-w-3xl">
-            <p className="mb-5 inline-flex rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">
+            <p className="mb-5 inline-flex rounded-full border border-crowdplate-accent/60 bg-crowdplate-secondary px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-crowdplate-dark">
               Built for campus groups
             </p>
             <h1 className="text-5xl sm:text-6xl lg:text-[4.5rem] font-semibold tracking-tight leading-[1.05]">
@@ -24,7 +25,7 @@ const Index = () => {
               <span className="text-crowdplate-primary">One person orders.</span>
             </h1>
             <p className="mt-6 text-lg sm:text-xl text-neutral-600 max-w-2xl leading-relaxed">
-              When a group eats together, someone still has to collect every item and place the order. CrowdPlate is that layer: one session, everyone’s items, one list to take to any outlet on campus.
+              When a group eats together, someone still has to collect every item and place the order. {BRAND.name} is that layer: one session, everyone’s items, one list to take to any outlet on campus.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg" className="h-11 rounded-md bg-neutral-900 hover:bg-neutral-800 text-white px-5">
@@ -51,8 +52,8 @@ const Index = () => {
               Campus groups already know the outlet. What takes time is gathering who wants what — across messages, last-minute changes, and a list that only exists in one person’s head at the counter.
             </p>
           </div>
-          <div className="rounded-2xl border border-orange-200 bg-orange-50/60 p-8 md:p-10">
-            <p className="text-sm font-medium text-crowdplate-primary">CrowdPlate</p>
+          <div className="rounded-2xl border border-crowdplate-accent/60 bg-crowdplate-secondary/60 p-8 md:p-10">
+            <p className="text-sm font-medium text-crowdplate-primary">{BRAND.name}</p>
             <h2 className="mt-2 text-3xl font-semibold tracking-tight">A shared session that becomes one order</h2>
             <p className="mt-4 text-neutral-600 leading-relaxed">
               Create a session for any canteen, cafe, or night outlet. Each person adds their own items before a cutoff. You receive a single named list and a total, then place that order at the outlet.
@@ -95,7 +96,7 @@ const Index = () => {
         </div>
       </section>
 
-      <section className="bg-[#fff8f3]">
+      <section className="bg-crowdplate-secondary/70">
         <div className="container py-20 md:py-24 flex flex-col md:flex-row md:items-center md:justify-between gap-8">
           <div className="max-w-xl">
             <h2 className="text-3xl font-semibold tracking-tight">Start a session for your next group order</h2>
@@ -111,7 +112,7 @@ const Index = () => {
 
       <footer className="border-t border-neutral-200">
         <div className="container py-8 flex flex-col sm:flex-row justify-between gap-2 text-sm text-neutral-500">
-          <p>CrowdPlate</p>
+          <p>{BRAND.name}</p>
           <p>Group ordering for campus outlets</p>
         </div>
       </footer>

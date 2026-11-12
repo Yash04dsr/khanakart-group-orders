@@ -69,11 +69,11 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				crowdplate: {
-					primary: "#F05A28",
-					secondary: "#FFF7ED",
-					accent: "#FDBA74",
-					neutral: "#737373",
-					dark: "#171717",
+					primary: "hsl(var(--brand-primary))",
+					secondary: "hsl(var(--brand-secondary))",
+					accent: "hsl(var(--brand-accent))",
+					neutral: "hsl(var(--brand-neutral))",
+					dark: "hsl(var(--brand-dark))",
 				}
 			},
 			borderRadius: {

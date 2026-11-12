@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { BRAND } from "@/lib/brand";
 
 const MemberDashboard = () => {
   const { user } = useAuth();
@@ -79,7 +80,7 @@ const MemberDashboard = () => {
   return (
     <div className="container max-w-5xl py-10">
       <div className="mb-8">
-        <p className="text-sm font-medium text-crowdplate-primary">CrowdPlate</p>
+        <p className="text-sm font-medium text-crowdplate-primary">{BRAND.name}</p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight">Your group orders</h1>
         <p className="text-muted-foreground mt-2">
           Add your items to an open session before its cutoff.

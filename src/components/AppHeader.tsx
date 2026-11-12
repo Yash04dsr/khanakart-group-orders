@@ -3,6 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { LogOut } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { BRAND } from "@/lib/brand";
 
 const AppHeader = () => {
   const { user, logout } = useAuth();
@@ -29,11 +30,11 @@ const AppHeader = () => {
     >
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5 font-semibold tracking-tight text-lg">
-          <span className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-neutral-900 shadow-sm">
+          <span className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-crowdplate-dark shadow-sm">
             <span className="absolute top-2 h-1.5 w-1.5 rounded-full bg-crowdplate-accent" />
             <span className="absolute bottom-2 h-2.5 w-4 rounded-b-full bg-crowdplate-primary" />
           </span>
-          <span>CrowdPlate</span>
+          <span>{BRAND.name}</span>
         </Link>
 
         <div className="flex items-center gap-3">

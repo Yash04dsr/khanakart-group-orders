@@ -1,8 +1,13 @@
-# CrowdPlate
+# CrowdPlate / KhanaKart
 
 CrowdPlate turns a campus group’s individual food requests into one order-ready list.
 
 An organizer starts a session for any campus outlet and sets a cutoff. Everyone adds their own items, quantities, and optional prices. CrowdPlate combines the submissions so the organizer can copy or export one order.
+
+The same product is deployed with domain-specific branding:
+
+- `crowdplate.online` → CrowdPlate
+- `khanakart.me` → KhanaKart
 
 ## Product flow
 
